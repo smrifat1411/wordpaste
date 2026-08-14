@@ -4,6 +4,31 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.8.0
+
+### Removed
+
+- The public API is three functions instead of eleven. `isWordHtml`,
+  `isGoogleDocsHtml`, `cleanWordHtml`, `cleanGoogleDocsHtml`,
+  `stripInlineColors`, `mathNodeHtml`, `escapeLatexAttr` and `escapeLatexText`
+  are now internal.
+
+  Working out whether a paste came from Word or Google Docs was never the
+  caller's job — `transformPastedHTML` does it. Exposing the routing made
+  eleven decisions out of one, and every export is a promise to keep forever.
+
+  `cleanWordHtml` went too: it took a `renderMath` option for custom equation
+  markup, but being Word-only it silently skipped the Google Docs handling.
+  If you need custom markup, open an issue and it comes back properly.
+
+  Breaking, and deliberately done now — the package is days old and nothing
+  depends on the old surface yet.
+
+### Changed
+
+- README leads with the one function. The two remaining extras are under
+  Advanced, where a first-time reader will not trip over them.
+
 ## 0.7.0
 
 ### Added

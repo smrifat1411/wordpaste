@@ -333,7 +333,7 @@ new Editor({
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste@0.7.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.8.0';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.
@@ -425,7 +425,6 @@ new Editor({
           stat('Dead images removed', deadImages, deadImages ? 'good' : 'zero'),
           stat('Size', `${raw.length.toLocaleString()} → ${out.length.toLocaleString()}`),
           stat('Smaller by', `${shrink}%`, shrink ? 'good' : 'zero'),
-          stat('Word clipboard', isWordHtml(raw) ? 'yes' : 'no', isWordHtml(raw) ? 'good' : 'zero'),
         ].join('');
         return out;
       };

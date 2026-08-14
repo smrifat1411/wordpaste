@@ -40,12 +40,19 @@ for (const page of [
   if (!existsSync(join('docs', page))) fails.push(`links a missing example: docs/${page}`);
 }
 
-const exported = new Set(all(source, /^\s*(\w+),$/gm));
+// Handles both `export { a, b } from …` on one line and the multi-line form.
+const exported = new Set(
+  [...source.matchAll(/export\s*\{([^}]*)\}/g)]
+    .flatMap((m) => m[1].split(','))
+    .map((name) => name.trim())
+    .filter((name) => name && !name.startsWith('type '))
+    .map((name) => name.split(/\s+as\s+/).pop()),
+);
 for (const name of all(readme, /^### `(\w+)\(/gm)) {
   if (!exported.has(name)) fails.push(`README documents \`${name}\`, which is not exported`);
 }
 for (const name of exported) {
-  if (!readme.includes(`\`${name}`)) fails.push(`export \`${name}\` is undocumented`);
+  if (!readme.includes(name)) fails.push(`export \`${name}\` is not mentioned in the README`);
 }
 
 for (const field of [

@@ -61,7 +61,7 @@
       import { registerRichText, HeadingNode, QuoteNode } from 'https://esm.sh/@lexical/rich-text@0.49';
       import { $generateNodesFromDOM } from 'https://esm.sh/@lexical/html@0.49';
       import { registerHistory, createEmptyHistoryState } from 'https://esm.sh/@lexical/history@0.49';
-      import { transformPastedHTML, isWordHtml, hasWordMath } from 'https://esm.sh/wordpaste@0.7.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.8.0';
 
       const editor = createEditor({
         namespace: 'wordpaste-example',
@@ -76,7 +76,7 @@
         PASTE_COMMAND,
         (event) => {
           const html = event.clipboardData?.getData('text/html');
-          if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
+          if (!html) return false;
 
           event.preventDefault();
           const clean = transformPastedHTML(html);
@@ -93,13 +93,13 @@
 
       document.getElementById('code').textContent = `import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
 import { $generateNodesFromDOM } from '@lexical/html';
-import { transformPastedHTML, isWordHtml, hasWordMath } from 'wordpaste';
+import { transformPastedHTML } from 'wordpaste';
 
 editor.registerCommand(
   PASTE_COMMAND,
   (event) => {
     const html = event.clipboardData?.getData('text/html');
-    if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
+    if (!html) return false;
 
     event.preventDefault();
     const dom = new DOMParser().parseFromString(transformPastedHTML(html), 'text/html');
