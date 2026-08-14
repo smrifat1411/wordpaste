@@ -27,10 +27,7 @@ import { ommlToLatex, mathNodeHtml } from './omml-to-latex.js';
 export type RenderMath = (latex: string, block: boolean) => string;
 
 export type CleanWordHtmlOptions = {
-  /**
-   * How to render a converted equation. Defaults to `mathNodeHtml`, which emits
-   * `@tiptap/extension-mathematics` markup. Override it for another editor.
-   */
+  /** Defaults to `mathNodeHtml`. Override to emit markup for another editor. */
   renderMath?: RenderMath;
 };
 
@@ -46,14 +43,10 @@ export function isWordHtml(html: string): boolean {
 }
 
 /**
- * True when the pasted HTML carries recoverable equation math — OMML
- * (`<m:oMath>`), Word's msEquation MathML fallback, or bare MathML.
- *
- * Two jobs. A paste handler uses it to skip the rasterized image Word ALSO puts
- * on the clipboard, so the editable equation wins instead of a flat picture.
- * And it catches the case `isWordHtml` cannot: LibreOffice pastes bare `<math>`
- * with no `mso-` markers at all, so gating only on `isWordHtml` would skip a
- * document whose equations `cleanWordHtml` can recover.
+ * True when the pasted HTML carries recoverable math — OMML, Word's msEquation
+ * fallback, or bare MathML. Use it to skip the rasterized image Word also puts
+ * on the clipboard, and to catch LibreOffice pastes, which carry no `mso-`
+ * markers for `isWordHtml` to find.
  */
 export function hasWordMath(html: string): boolean {
   return /<m:oMath|\[if gte msEquation|<math[\s>]/i.test(html);

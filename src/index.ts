@@ -11,4 +11,5 @@ export {
   ommlToLatex,
   mathNodeHtml,
   escapeLatexAttr,
+  escapeLatexText,
 } from './omml-to-latex.js';

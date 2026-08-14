@@ -7,8 +7,9 @@ import {
   stripInlineColors,
 } from '../src/word-paste-cleaner.js';
 
-const inlineMath = (latex: string) =>
-  `<span data-type="inline-math" data-latex="${latex}"></span>`;
+// LaTeX appears twice: in `data-latex`, and as text so it degrades readably.
+const inlineMath = (latex: string, text = latex) =>
+  `<span data-type="inline-math" data-latex="${latex}">${text}</span>`;
 
 describe('isWordHtml', () => {
   it('matches Word/Office clipboard markers', () => {
@@ -33,8 +34,7 @@ describe('hasWordMath', () => {
   });
 
   it('is true for bare MathML, which carries no mso- markers at all', () => {
-    // LibreOffice pastes this. `isWordHtml` cannot see it, so gating only on
-    // that would skip a document whose equations are recoverable.
+    // LibreOffice pastes this; `isWordHtml` cannot see it.
     expect(isWordHtml('<math><mi>x</mi></math>')).toBe(false);
     expect(hasWordMath('<math><mi>x</mi></math>')).toBe(true);
     expect(hasWordMath('<math xmlns="http://www.w3.org/1998/Math/MathML"/>')).toBe(true);
@@ -109,6 +109,19 @@ describe('cleanWordHtml', () => {
         '<img src="file:///C:/Users/x/clip.png"><img src="https://cdn/real.png">',
       ),
     ).toBe('<img src="https://cdn/real.png">');
+  });
+
+  it('escapes a LaTeX "<" so the fallback text cannot open a bogus tag', () => {
+    // Assert the parsed result, not the raw string: HTML attribute
+    // serialisation does not escape "<", so a DOM round-trip rewrites it back.
+    const out = cleanWordHtml('<m:oMath><m:r>x&lt;y</m:r></m:oMath>');
+    const el = new DOMParser()
+      .parseFromString(out, 'text/html')
+      .querySelector('[data-latex]');
+
+    expect(el?.getAttribute('data-latex')).toBe('x<y');
+    expect(el?.textContent).toBe('x<y');
+    expect(el?.children.length).toBe(0);
   });
 
   it('honours a custom renderMath so non-TipTap editors can use it', () => {

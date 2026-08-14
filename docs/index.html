@@ -295,6 +295,20 @@
       .doc.raw {
         font-family: Calibri, Carlito, "Segoe UI", sans-serif;
       }
+      .doc[data-theme='dark'] {
+        background: #0b0b0e;
+        color: #e4e4e7;
+      }
+      #caption {
+        margin: 0 0 1rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+        max-width: 78ch;
+      }
+      #caption b {
+        color: var(--fg);
+        font-weight: 600;
+      }
       .doc img {
         max-width: 100%;
       }
@@ -505,12 +519,14 @@
         <button class="chip" data-sample="docs">Google Docs · dark theme</button>
       </div>
 
+      <p id="caption"></p>
+
       <div class="grid">
         <section class="pane before">
           <div class="head">
             <span class="title">
               <span class="dot"></span>Without wordpaste
-              <span class="sub">what your editor gets today</span>
+              <span class="sub">what a typical editor keeps</span>
             </span>
             <div class="tabs" role="tablist">
               <button class="tab" data-panel="beforeDoc" role="tab" aria-selected="true">
@@ -723,6 +739,33 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
           '  </span></p></b>',
       };
 
+      // What a ProseMirror-style schema does with a tag it has no rule for:
+      // drop the element, keep its text. Verified in prosemirror-model's
+      // addElement — no matching rule falls through to addAll(dom).
+      const EDITOR_TAGS = new Set(
+        ('p br strong b em i u s a ul ol li h1 h2 h3 h4 h5 h6 blockquote code pre ' +
+          'img table thead tbody tr td th span div sub sup hr').toUpperCase().split(' '),
+      );
+
+      const asEditorWouldKeep = (html) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        for (const el of [...doc.body.querySelectorAll('*')]) {
+          if (!EDITOR_TAGS.has(el.tagName.toUpperCase())) el.replaceWith(...el.childNodes);
+        }
+        return doc.body.innerHTML;
+      };
+
+      const CAPTIONS = {
+        equation:
+          'Word ships every equation twice — as real maths and as a screenshot. On the left the maths tag is unknown to the editor, so it collapses to loose characters and all that is left is a dead <b>file://</b> image. On the right the maths survived.',
+        document:
+          "Word's fonts, <b>mso-</b> classes and a <b>file://</b> image that only exists on the writer's own computer. All gone on the right.",
+        mathml:
+          'LibreOffice sends <b>MathML</b>. Your editor has no rule for the <b>&lt;math&gt;</b> tag, so it drops it and keeps only the characters — the formula on the left is destroyed. On the right it became an editable equation.',
+        docs:
+          'Shown on a <b>dark theme</b>, because that is where this bites. Google Docs writes <b>color: rgb(0,0,0)</b> inline, so on the left the text is black on black.',
+      };
+
       const renderMath = (root) => {
         root.querySelectorAll('[data-latex]').forEach((el) => {
           const displayMode = el.dataset.type === 'block-math';
@@ -747,9 +790,7 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
           return;
         }
 
-        // Left: render the clipboard HTML untouched. Word's fonts survive and the
-        // file:// screenshot is a broken image — that is the actual problem.
-        beforeDoc.innerHTML = raw;
+        beforeDoc.innerHTML = asEditorWouldKeep(raw);
 
         const fromWord = isWordHtml(raw);
         // LibreOffice pastes bare <math> with no mso- markers, so isWordHtml
@@ -776,10 +817,20 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
       const clearChips = () =>
         document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
 
+      const setSampleChrome = (key) => {
+        const caption = document.getElementById('caption');
+        caption.innerHTML = key ? CAPTIONS[key] : 'Editing your own HTML — paste from Word below to load a real one.';
+        for (const el of [beforeDoc, afterDoc]) {
+          if (key === 'docs') el.dataset.theme = 'dark';
+          else delete el.dataset.theme;
+        }
+      };
+
       const load = (key, button) => {
         beforeSrc.value = SAMPLES[key];
         clearChips();
         button?.setAttribute('aria-pressed', 'true');
+        setSampleChrome(key);
         run();
       };
 
@@ -802,6 +853,7 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
 
       beforeSrc.addEventListener('input', () => {
         clearChips();
+        setSampleChrome(null);
         run();
       });
 
@@ -813,6 +865,7 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
         drop.textContent = `Loaded ${html.length.toLocaleString()} characters — see the comparison above.`;
         beforeSrc.value = html;
         clearChips();
+        setSampleChrome(null);
         run();
         document.querySelector('.grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
       });

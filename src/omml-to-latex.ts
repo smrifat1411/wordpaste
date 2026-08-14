@@ -234,9 +234,17 @@ export function ommlToLatex(ommlFragment: string): string {
   }
 }
 
+/** Escape a LaTeX string for use as element text. */
+export function escapeLatexText(latex: string): string {
+  return latex
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 /** Escape a LaTeX string for use inside a `data-latex="…"` attribute. */
 export function escapeLatexAttr(latex: string): string {
-  return latex.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return escapeLatexText(latex).replace(/"/g, '&quot;');
 }
 
 /**
@@ -244,10 +252,15 @@ export function escapeLatexAttr(latex: string): string {
  * (`<div data-type="block-math">`) for display equations, inline
  * (`<span data-type="inline-math">`) otherwise. This is `cleanWordHtml`'s
  * default `renderMath`; pass your own to emit something else.
+ *
+ * The LaTeX is repeated as text so an equation degrades to readable source when
+ * nothing renders it. Tiptap's maths nodes are atoms reading `data-latex`, so
+ * they ignore it.
  */
 export function mathNodeHtml(latex: string, block: boolean): string {
-  const esc = escapeLatexAttr(latex);
+  const attr = escapeLatexAttr(latex);
+  const text = escapeLatexText(latex);
   return block
-    ? `<div data-type="block-math" data-latex="${esc}"></div>`
-    : `<span data-type="inline-math" data-latex="${esc}"></span>`;
+    ? `<div data-type="block-math" data-latex="${attr}">${text}</div>`
+    : `<span data-type="inline-math" data-latex="${attr}">${text}</span>`;
 }
