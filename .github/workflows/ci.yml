@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  pack:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      # Install the real tarball into an empty project and run it, so a broken
+      # `exports` map or a missing dist file fails here and not for a user.
+      - name: Smoke-test the published tarball
+        run: |
+          npm pack --pack-destination /tmp
+          mkdir /tmp/smoke && cd /tmp/smoke
+          npm init -y > /dev/null
+          npm install /tmp/wordpaste-*.tgz jsdom
+          cat > check.mjs <<'EOF'
+          import { JSDOM } from 'jsdom';
+          const w = new JSDOM().window;
+          globalThis.DOMParser = w.DOMParser;
+          globalThis.Node = w.Node;
+          const { isWordHtml, cleanWordHtml } = await import('wordpaste');
+          const input =
+            '<p class="MsoNormal" style="mso-bidi-font-size:11pt">Hi<o:p></o:p></p>' +
+            '<m:oMath><m:f><m:num><m:r>a</m:r></m:num><m:den><m:r>b</m:r></m:den></m:f></m:oMath>';
+          const out = cleanWordHtml(input);
+          if (!isWordHtml(input)) throw new Error('isWordHtml failed on Word markup');
+          if (!out.includes('data-latex="\\frac{a}{b}"')) throw new Error(`equation lost: ${out}`);
+          if (/mso-|MsoNormal|<o:p>/.test(out)) throw new Error(`Word junk survived: ${out}`);
+          console.log('tarball smoke test passed:', out);
+          EOF
+          node check.mjs

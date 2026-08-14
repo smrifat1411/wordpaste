@@ -5,6 +5,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/smrifat1411/wordpaste/actions/workflows/ci.yml"><img src="https://github.com/smrifat1411/wordpaste/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.npmjs.com/package/wordpaste"><img src="https://img.shields.io/npm/v/wordpaste.svg" alt="npm version"></a>
   <a href="https://bundlephobia.com/package/wordpaste"><img src="https://img.shields.io/bundlephobia/minzip/wordpaste.svg" alt="minzipped size"></a>
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="zero dependencies">
@@ -27,6 +28,7 @@
 
 - [Install](#install)
 - [Usage](#usage)
+- [What it handles](#what-it-handles)
 - [Integrations](#integrations) — [Tiptap](#tiptap) · [Lexical](#lexical) · [Plain JavaScript](#plain-javascript) · [React](#react) · [Node](#node--server-side)
 - [API](#api)
 - [Equations](#equations)
@@ -55,6 +57,29 @@ pasted HTML before it is parsed.
 `hasWordMath` is in the guard because LibreOffice pastes bare `<math>` with no
 `mso-` markers at all — `isWordHtml` cannot see it, so gating on that alone
 would skip a document whose equations are recoverable.
+
+## What it handles
+
+Verified against each source's real clipboard markup:
+
+| You copy from | Junk cleaned | Equations kept editable |
+| --- | --- | --- |
+| **Microsoft Word** | Yes | **Yes** — OMML |
+| **LibreOffice Writer** | Yes | **Yes** — MathML |
+| **Outlook** | Yes | n/a |
+| **Excel** | Yes | n/a |
+| **Google Docs** | Colour only | No |
+| Anything else | Left untouched | — |
+
+**Why Google Docs gets less.** Docs writes no `mso-` markers, so the detector
+correctly says "not Word", and its HTML is far cleaner than Word's to begin
+with. `stripInlineColors` still runs, which is the part that matters — Docs
+writes `color: rgb(0,0,0)` inline, so on a dark theme its text arrives black on
+black.
+
+Its equations cannot be recovered by anyone: **Google Docs puts them on the
+clipboard as images already.** Word is the unusual one — it sends the picture
+*and* the real maths, which is the gap this package exploits.
 
 ## Integrations
 

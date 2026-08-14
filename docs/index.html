@@ -393,6 +393,55 @@
         color: var(--faint);
       }
 
+      .support {
+        margin-top: 2.5rem;
+      }
+      .support h2 {
+        font-size: 1rem;
+        margin: 0 0 0.6rem;
+      }
+      .support .wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .support table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        background: var(--soft);
+      }
+      .support th,
+      .support td {
+        text-align: left;
+        padding: 0.62rem 1rem;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .support th {
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        font-weight: 600;
+        background: var(--raised);
+      }
+      .support tr:last-child td {
+        border-bottom: 0;
+      }
+      .support .yes {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .support .no {
+        color: var(--faint);
+      }
+      .support .note {
+        margin: 0.8rem 0 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+        max-width: 72ch;
+      }
       .usage {
         margin-top: 2.5rem;
       }
@@ -512,6 +561,61 @@
           nothing is uploaded.
         </p>
         <div id="drop" contenteditable="true"></div>
+      </section>
+
+      <section class="support">
+        <h2>What it handles</h2>
+        <div class="wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>You copy from</th>
+                <th>Junk cleaned</th>
+                <th>Equations kept editable</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Microsoft Word</b></td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes — OMML</td>
+              </tr>
+              <tr>
+                <td><b>LibreOffice Writer</b></td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes — MathML</td>
+              </tr>
+              <tr>
+                <td>Outlook</td>
+                <td class="yes">Yes</td>
+                <td class="no">n/a</td>
+              </tr>
+              <tr>
+                <td>Excel</td>
+                <td class="yes">Yes</td>
+                <td class="no">n/a</td>
+              </tr>
+              <tr>
+                <td>Google Docs</td>
+                <td>Colour only</td>
+                <td class="no">No</td>
+              </tr>
+              <tr>
+                <td>Anything else</td>
+                <td class="no">Left untouched</td>
+                <td class="no">&mdash;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Google Docs equations cannot be recovered by anyone &mdash; Docs puts
+          them on the clipboard as images already. Word is the unusual one: it
+          sends the picture <i>and</i> the real maths, which is the gap this
+          package exploits. Docs still gets the colour fix, because it writes
+          <code>color: rgb(0,0,0)</code> inline and that turns black-on-black on
+          a dark theme.
+        </p>
       </section>
 
       <section class="usage">
