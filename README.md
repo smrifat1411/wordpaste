@@ -380,6 +380,16 @@ Word decoration. Word writes `text-align:justify` on justified paragraphs, so a
 justified document arrives justified. Everything else goes: colour, highlight,
 font family and size.
 
+⚠️ **Your editor has to want it.** wordpaste emits `style="text-align:center"`,
+but an editor drops any style its schema has no rule for. In Tiptap that means
+adding [`@tiptap/extension-text-align`](https://tiptap.dev/docs/editor/extensions/functionality/textalign):
+
+```js
+TextAlign.configure({ types: ['heading', 'paragraph'] })
+```
+
+Without it the alignment is discarded by the editor, not by wordpaste.
+
 `options.renderMath: (latex, block) => string` — see
 [Showing the maths](#showing-the-maths).
 

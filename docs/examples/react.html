@@ -55,12 +55,15 @@
       import { useEditor, EditorContent } from 'https://esm.sh/@tiptap/react@3?deps=react@19,react-dom@19';
       import { Extension } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
       import {
         isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
       } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
+      // Tiptap drops text-align unless a schema knows about it.
+      const ALIGN = TextAlign.configure({ types: ['heading', 'paragraph'] });
       const h = React.createElement;
 
       // The whole integration — identical to any other framework.
@@ -84,7 +87,7 @@
 
       function WordEditor() {
         const editor = useEditor({
-          extensions: [StarterKit, WordPaste, Mathematics],
+          extensions: [StarterKit, WordPaste, Mathematics, ALIGN],
           content: '<p>Paste from Word here…</p>',
         });
 
@@ -110,6 +113,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
 import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
 
 const WordPaste = Extension.create({
@@ -123,7 +127,12 @@ const WordPaste = Extension.create({
 
 export function WordEditor() {
   const editor = useEditor({
-    extensions: [StarterKit, WordPaste],
+    extensions: [
+      StarterKit,
+      WordPaste,
+      // without this Tiptap drops Word's centred headings
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    ],
     content: '<p>Paste from Word here…</p>',
   });
 

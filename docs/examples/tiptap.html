@@ -57,12 +57,15 @@
     <script type="module">
       import { Editor, Extension } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
       import {
         isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
       } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
+      // Tiptap drops text-align unless a schema knows about it.
+      const ALIGN = TextAlign.configure({ types: ['heading', 'paragraph'] });
 
       // This extension is the whole integration.
       const WordPaste = Extension.create({
@@ -76,7 +79,7 @@
 
       const editor = new Editor({
         element: document.getElementById('editor'),
-        extensions: [StarterKit, WordPaste, Mathematics],
+        extensions: [StarterKit, WordPaste, Mathematics, ALIGN],
         content: '<p>Paste from Word here…</p>',
       });
 
@@ -96,6 +99,7 @@
       });
 
       document.getElementById('code').textContent = `import { Extension } from '@tiptap/core';
+import TextAlign from '@tiptap/extension-text-align';
 import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
 
 export const WordPaste = Extension.create({
@@ -107,7 +111,9 @@ export const WordPaste = Extension.create({
   },
 });
 
-// then add WordPaste to your extensions array`;
+// Add WordPaste to your extensions array. Add TextAlign too if you want Word's
+// centred headings to survive — Tiptap drops alignment its schema does not know:
+//   TextAlign.configure({ types: ['heading', 'paragraph'] })`;
     </script>
   </body>
 </html>

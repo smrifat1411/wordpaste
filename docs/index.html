@@ -307,12 +307,15 @@ export const WordPaste = Extension.create({
     <script type="module">
       import { Editor, Extension } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
       import {
         isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
       } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
+      // Tiptap drops text-align unless a schema knows about it.
+      const ALIGN = TextAlign.configure({ types: ['heading', 'paragraph'] });
       const $ = (id) => document.getElementById(id);
       const beforeDoc = $('beforeDoc'), beforeSrc = $('beforeSrc');
       const afterDoc = $('afterDoc'), afterSrc = $('afterSrc'), stats = $('stats');
@@ -420,6 +423,7 @@ export const WordPaste = Extension.create({
         element: afterDoc,
         extensions: [
           StarterKit,
+          ALIGN,
           WordPaste,
           Mathematics.configure({
             inlineOptions: { onClick: (node, pos) => openMathBar(node, pos) },

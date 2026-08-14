@@ -54,12 +54,15 @@
       import { EditorContent, useEditor } from 'https://esm.sh/@tiptap/vue-3@3?deps=vue@3';
       import { Extension } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
       import {
         isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
       } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
+      // Tiptap drops text-align unless a schema knows about it.
+      const ALIGN = TextAlign.configure({ types: ['heading', 'paragraph'] });
 
       // The whole integration — identical to any other framework.
       const WordPaste = Extension.create({
@@ -83,7 +86,7 @@
       createApp({
         setup() {
           const editor = useEditor({
-            extensions: [StarterKit, WordPaste, Mathematics],
+            extensions: [StarterKit, WordPaste, Mathematics, ALIGN],
             content: '<p>Paste from Word here…</p>',
           });
 
@@ -108,6 +111,7 @@
 import { EditorContent, useEditor } from '@tiptap/vue-3';
 import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
 import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
 
 const WordPaste = Extension.create({
@@ -120,7 +124,12 @@ const WordPaste = Extension.create({
 });
 
 const editor = useEditor({
-  extensions: [StarterKit, WordPaste],
+  extensions: [
+    StarterKit,
+    WordPaste,
+    // without this Tiptap drops Word's centred headings
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  ],
   content: '<p>Paste from Word here…</p>',
 });
 <\/script>
