@@ -68,7 +68,6 @@
 
       new EditorView(document.getElementById('editor'), {
         state: EditorState.create({ doc: PMParser.fromSchema(schema).parse(start) }),
-        // The whole integration is this one prop.
         transformPastedHTML,
       });
 

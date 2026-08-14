@@ -377,8 +377,7 @@ new Editor({
           'Shown on a <b>dark theme</b>, because that is where this bites. Google Docs writes <b>color: rgb(0,0,0)</b> inline, so on the left the text is black on black.',
       };
 
-      // What a ProseMirror-style schema does with a tag it has no rule for:
-      // drop the element, keep its text.
+      // A schema with no rule for a tag drops the element but keeps its text.
       const EDITOR_TAGS = new Set(
         ('p br strong b em i u s a ul ol li h1 h2 h3 h4 h5 h6 blockquote code pre ' +
           'img table thead tbody tr td th span div sub sup hr').toUpperCase().split(' '),
@@ -417,8 +416,7 @@ new Editor({
       const editor = new Editor({
         element: afterDoc,
         editorProps: {
-          // The integration is `transformPastedHTML` on its own; this page also
-          // fills the comparison panels, so it wraps it.
+          // Wrapped only so this page can also fill the left-hand panels.
           transformPastedHTML: (html) => showComparison(html),
         },
         extensions: [
@@ -478,8 +476,6 @@ new Editor({
         editor.commands.setContent(showComparison(SAMPLES[key]));
       };
 
-      // Editing the clipboard HTML re-runs everything, so the input is a
-      // scratchpad rather than a read-only dump.
       beforeSrc.addEventListener('input', () => {
         clearChips();
         setChrome(null);
@@ -501,7 +497,6 @@ new Editor({
         });
       });
 
-      // A paste into the editor runs transformPastedHTML, which fills both panels.
       editor.view.dom.addEventListener('paste', () => {
         clearChips();
         setChrome(null);

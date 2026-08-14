@@ -67,7 +67,7 @@
         renderMath();
       });
 
-      // Nothing renders LaTeX on its own — this is the KaTeX pass.
+      // wordpaste emits the LaTeX; rendering it is on you.
       function renderMath() {
         editor.querySelectorAll('[data-latex]').forEach((el) => {
           katex.render(el.dataset.latex, el, {

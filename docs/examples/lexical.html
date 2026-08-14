@@ -72,7 +72,6 @@
       registerRichText(editor);
       registerHistory(editor, createEmptyHistoryState(), 300);
 
-      // The whole integration: claim the paste, clean the HTML, insert the nodes.
       editor.registerCommand(
         PASTE_COMMAND,
         (event) => {

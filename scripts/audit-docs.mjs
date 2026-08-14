@@ -1,4 +1,3 @@
-// Fails the build when the docs and the code disagree.
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -24,18 +23,15 @@ const walk = (dir) =>
 const unique = (matches) => [...new Set(matches)];
 const all = (text, re) => unique([...text.matchAll(re)].map((m) => m[1]));
 
-// Every #anchor in the README resolves to a heading.
 const anchors = new Set(all(readme, /^#{1,6} (.+)$/gm).map(slug));
 for (const anchor of all(readme, /\]\(#([\w-]+)\)/g)) {
   if (!anchors.has(anchor)) fails.push(`README anchor #${anchor} has no heading`);
 }
 
-// Every relative link points at a file that exists.
 for (const rel of all(readme, /\]\((\.\/[^)]+)\)/g)) {
   if (!existsSync(rel)) fails.push(`README links a missing file: ${rel}`);
 }
 
-// Every example page the README or playground advertises is really shipped.
 const playground = readFileSync('docs/index.html', 'utf8');
 for (const page of [
   ...all(readme, /wordpaste\/(examples\/[\w.-]+\.html)/g),
@@ -44,7 +40,6 @@ for (const page of [
   if (!existsSync(join('docs', page))) fails.push(`links a missing example: docs/${page}`);
 }
 
-// Every documented export exists, and every export is documented.
 const exported = new Set(all(source, /^\s*(\w+),$/gm));
 for (const name of all(readme, /^### `(\w+)\(/gm)) {
   if (!exported.has(name)) fails.push(`README documents \`${name}\`, which is not exported`);
@@ -53,7 +48,6 @@ for (const name of exported) {
   if (!readme.includes(`\`${name}`)) fails.push(`export \`${name}\` is undocumented`);
 }
 
-// npm shows a poor package page without these.
 for (const field of [
   'name', 'version', 'description', 'keywords', 'license', 'author',
   'repository', 'homepage', 'bugs', 'type', 'main', 'types', 'exports',
@@ -62,9 +56,7 @@ for (const field of [
   if (!(field in pkg)) fails.push(`package.json is missing "${field}"`);
 }
 
-// Every CDN import, in a demo page or in the README, must pin this exact
-// version. An unpinned URL is served from a stale browser cache after a
-// release, which silently breaks the page for anyone who visited before.
+// Unpinned CDN imports get served from a stale cache after a release.
 for (const file of ['README.md', ...walk('docs').filter((f) => f.endsWith('.html'))]) {
   const text = readFileSync(file, 'utf8');
 
@@ -77,14 +69,12 @@ for (const file of ['README.md', ...walk('docs').filter((f) => f.endsWith('.html
     }
   }
 
-  // No shipped page still teaches a removed API.
   if (file.endsWith('.html')) {
     if (text.includes('Extension.create')) fails.push(`${file} still shows the old Extension API`);
     if (text.includes('stripInlineColors(isWordHtml')) fails.push(`${file} still shows the old composition`);
   }
 }
 
-// The install section should not go out of date with the ecosystem.
 for (const manager of ['npm install wordpaste', 'pnpm add wordpaste', 'yarn add wordpaste', 'bun add wordpaste']) {
   if (!readme.includes(manager)) fails.push(`README is missing the install line: ${manager}`);
 }

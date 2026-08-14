@@ -43,10 +43,9 @@ export function isWordHtml(html: string): boolean {
 }
 
 /**
- * True when the pasted HTML carries recoverable math — OMML, Word's msEquation
+ * True when the paste carries recoverable math — OMML, Word's msEquation
  * fallback, or bare MathML. Use it to skip the rasterized image Word also puts
- * on the clipboard, and to catch LibreOffice pastes, which carry no `mso-`
- * markers for `isWordHtml` to find.
+ * on the clipboard, and to catch LibreOffice, which has no `mso-` markers.
  */
 export function hasWordMath(html: string): boolean {
   return /<m:oMath|\[if gte msEquation|<math[\s>]/i.test(html);
@@ -198,8 +197,7 @@ export function cleanWordHtml(
     .filter((el) => el.tagName.includes(':'))
     .forEach((el) => el.remove());
 
-  // Strip Word's inline styles, but keep text-align — that is layout the author
-  // chose, not Word decoration.
+  // Keep text-align: that is the author's layout, not Word decoration.
   doc.querySelectorAll('[style]').forEach((el) => {
     const kept = (el.getAttribute('style') ?? '')
       .split(';')
@@ -266,22 +264,12 @@ export function stripInlineColors(html: string): string {
 }
 
 /**
- * Ready-made paste handler: clean Word and LibreOffice HTML, and drop pasted
- * colour from everything else so a Google Docs paste cannot smuggle black text
- * into a dark theme.
+ * Clean a paste from Word or LibreOffice; drop colour from anything else so a
+ * Google Docs paste can't put black text on a dark theme.
  *
- * Named to match ProseMirror's editor prop, so it can be passed straight
- * through — Tiptap exposes the same prop via `editorProps`:
- *
- * ```js
- * new Editor({ editorProps: { transformPastedHTML } })   // Tiptap
- * new EditorView(el, { transformPastedHTML })            // ProseMirror
- * transformPastedHTML(html)                              // anywhere else
- * ```
- *
- * Takes no options on purpose: ProseMirror calls it as `(html, view)`, so extra
- * parameters would break passing it by reference. Compose `cleanWordHtml` and
- * the guards yourself if you need `renderMath` or a different rule.
+ * Named after ProseMirror's editor prop so it can be passed by reference —
+ * Tiptap takes the same prop via `editorProps`. No options for that reason;
+ * compose `cleanWordHtml` yourself if you need `renderMath`.
  */
 export function transformPastedHTML(html: string): string {
   return stripInlineColors(

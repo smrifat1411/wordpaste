@@ -253,9 +253,8 @@ export function escapeLatexAttr(latex: string): string {
  * (`<span data-type="inline-math">`) otherwise. This is `cleanWordHtml`'s
  * default `renderMath`; pass your own to emit something else.
  *
- * The LaTeX is repeated as text so an equation degrades to readable source when
- * nothing renders it. Tiptap's maths nodes are atoms reading `data-latex`, so
- * they ignore it.
+ * The LaTeX is repeated as text so it degrades readably when nothing renders
+ * it; Tiptap's math nodes are atoms reading `data-latex`, so they ignore it.
  */
 export function mathNodeHtml(latex: string, block: boolean): string {
   const attr = escapeLatexAttr(latex);

@@ -1,11 +1,7 @@
 name: Publish
 
-# Publishes to npm via trusted publishing (OIDC). No token is stored anywhere:
-# GitHub mints a short-lived credential that npm trusts because this exact
-# repository and workflow filename are registered on the package.
-#
-# npm generates a provenance attestation automatically for this path, so the
-# published version is cryptographically linked back to this commit and run.
+# Trusted publishing (OIDC) — no token stored. Requires the repo and this
+# filename to be registered on the package at npmjs.com.
 
 on:
   release:
@@ -34,7 +30,7 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
-      # Trusted publishing needs npm >= 11.5.1; do not rely on whatever Node ships.
+      # Trusted publishing needs npm >= 11.5.1.
       - name: Ensure a new enough npm
         run: |
           npm install -g npm@latest
@@ -42,8 +38,6 @@ jobs:
 
       - run: npm ci
 
-      # A release tag that disagrees with package.json means the wrong code is
-      # about to go out under the right name.
       - name: Tag must match package.json
         if: github.event_name == 'release'
         run: |
@@ -55,8 +49,6 @@ jobs:
             exit 1
           }
 
-      # prepublishOnly also runs build + test + audit:docs, but running them
-      # here means a failure is reported against its own step.
       - run: npm run build
       - run: npm test
       - run: npm run audit:docs
