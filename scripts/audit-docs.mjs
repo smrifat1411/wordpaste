@@ -62,11 +62,24 @@ for (const field of [
   if (!(field in pkg)) fails.push(`package.json is missing "${field}"`);
 }
 
-// No shipped page still teaches a removed API.
 for (const file of walk('docs').filter((f) => f.endsWith('.html'))) {
   const html = readFileSync(file, 'utf8');
+
+  // No shipped page still teaches a removed API.
   if (html.includes('Extension.create')) fails.push(`${file} still shows the old Extension API`);
   if (html.includes('stripInlineColors(isWordHtml')) fails.push(`${file} still shows the old composition`);
+
+  // Demo pages must pin the CDN import to this exact version. An unpinned URL
+  // gets served from a stale browser cache after a release, which silently
+  // breaks every page for anyone who visited before.
+  if (/esm\.sh\/wordpaste['"]/.test(html)) {
+    fails.push(`${file} imports wordpaste from an unpinned CDN URL`);
+  }
+  for (const pinned of all(html, /esm\.sh\/wordpaste@([\d.]+)/g)) {
+    if (pinned !== pkg.version) {
+      fails.push(`${file} pins wordpaste@${pinned}, but package.json is ${pkg.version}`);
+    }
+  }
 }
 
 if (fails.length) {
