@@ -56,6 +56,30 @@ new Editor({ editorProps: { transformPastedHTML } });
 npm install wordpaste
 ```
 
+```bash
+pnpm add wordpaste
+```
+
+```bash
+yarn add wordpaste
+```
+
+```bash
+bun add wordpaste
+```
+
+**No build step?** Import it straight from a CDN. Pin the version — an unpinned
+URL is served from a stale browser cache after a release.
+
+```html
+<script type="module">
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.5.0';
+</script>
+```
+
+It ships as ESM with TypeScript types, has no dependencies, and works in any
+modern browser. For Node, see [Next.js](#nextjs).
+
 ## Quick start
 
 ```js

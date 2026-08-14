@@ -62,24 +62,31 @@ for (const field of [
   if (!(field in pkg)) fails.push(`package.json is missing "${field}"`);
 }
 
-for (const file of walk('docs').filter((f) => f.endsWith('.html'))) {
-  const html = readFileSync(file, 'utf8');
+// Every CDN import, in a demo page or in the README, must pin this exact
+// version. An unpinned URL is served from a stale browser cache after a
+// release, which silently breaks the page for anyone who visited before.
+for (const file of ['README.md', ...walk('docs').filter((f) => f.endsWith('.html'))]) {
+  const text = readFileSync(file, 'utf8');
 
-  // No shipped page still teaches a removed API.
-  if (html.includes('Extension.create')) fails.push(`${file} still shows the old Extension API`);
-  if (html.includes('stripInlineColors(isWordHtml')) fails.push(`${file} still shows the old composition`);
-
-  // Demo pages must pin the CDN import to this exact version. An unpinned URL
-  // gets served from a stale browser cache after a release, which silently
-  // breaks every page for anyone who visited before.
-  if (/esm\.sh\/wordpaste['"]/.test(html)) {
+  if (/esm\.sh\/wordpaste['"]/.test(text)) {
     fails.push(`${file} imports wordpaste from an unpinned CDN URL`);
   }
-  for (const pinned of all(html, /esm\.sh\/wordpaste@([\d.]+)/g)) {
+  for (const pinned of all(text, /esm\.sh\/wordpaste@([\d.]+)/g)) {
     if (pinned !== pkg.version) {
       fails.push(`${file} pins wordpaste@${pinned}, but package.json is ${pkg.version}`);
     }
   }
+
+  // No shipped page still teaches a removed API.
+  if (file.endsWith('.html')) {
+    if (text.includes('Extension.create')) fails.push(`${file} still shows the old Extension API`);
+    if (text.includes('stripInlineColors(isWordHtml')) fails.push(`${file} still shows the old composition`);
+  }
+}
+
+// The install section should not go out of date with the ecosystem.
+for (const manager of ['npm install wordpaste', 'pnpm add wordpaste', 'yarn add wordpaste', 'bun add wordpaste']) {
+  if (!readme.includes(manager)) fails.push(`README is missing the install line: ${manager}`);
 }
 
 if (fails.length) {
