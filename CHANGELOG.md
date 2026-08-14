@@ -4,16 +4,6 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
-## Unreleased
-
-### Changed
-
-- Releases now publish from GitHub Actions using npm **trusted publishing**
-  (OIDC). No token is stored anywhere, and npm attaches a provenance attestation
-  linking each published version to the commit and workflow run that built it.
-  Publishing is triggered by creating a GitHub Release; a release tag that
-  disagrees with `package.json` fails the run.
-
 ## 0.5.0
 
 ### Added

@@ -427,15 +427,6 @@ Clean Word paste is a paid feature nearly everywhere:
 | tinymce-word-paste-filter | Yes | Yes | No |
 | **wordpaste** | **Yes, MIT** | **Yes** | **Yes** |
 
-## Releases
-
-Published from GitHub Actions with npm
-[trusted publishing](https://docs.npmjs.com/trusted-publishers) — no token is
-stored anywhere, and every version carries a
-[provenance attestation](https://docs.npmjs.com/generating-provenance-statements)
-linking it to the commit and workflow run that built it. You can verify any
-release on its npm page.
-
 ## Contributing
 
 Bug reports are welcome — please include the raw clipboard HTML that reproduces
