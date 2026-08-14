@@ -46,14 +46,22 @@ jobs:
           const w = new JSDOM().window;
           globalThis.DOMParser = w.DOMParser;
           globalThis.Node = w.Node;
-          const { isWordHtml, cleanWordHtml } = await import('wordpaste');
+          const api = await import('wordpaste');
+
+          const expected = ['transformPastedHTML', 'hasWordMath', 'ommlToLatex'].sort();
+          const actual = Object.keys(api).sort();
+          if (JSON.stringify(actual) !== JSON.stringify(expected))
+            throw new Error(`public API drifted: ${actual.join(', ')}`);
+
           const input =
+            '<html xmlns:o="urn:schemas-microsoft-com:office:office">' +
             '<p class="MsoNormal" style="mso-bidi-font-size:11pt">Hi<o:p></o:p></p>' +
             '<m:oMath><m:f><m:num><m:r>a</m:r></m:num><m:den><m:r>b</m:r></m:den></m:f></m:oMath>';
-          const out = cleanWordHtml(input);
-          if (!isWordHtml(input)) throw new Error('isWordHtml failed on Word markup');
+          const out = api.transformPastedHTML(input);
+
           if (!out.includes('data-latex="\\frac{a}{b}"')) throw new Error(`equation lost: ${out}`);
           if (/mso-|MsoNormal|<o:p>/.test(out)) throw new Error(`Word junk survived: ${out}`);
+          if (!api.hasWordMath(input)) throw new Error('hasWordMath failed on OMML');
           console.log('tarball smoke test passed:', out);
           EOF
           node check.mjs
