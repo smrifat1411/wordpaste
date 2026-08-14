@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wordpaste + Vue</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+        font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+      p.sub { margin: 0 0 1.25rem; color: #71717a; }
+      a { color: #059669; }
+      .box { min-height: 180px; padding: 1rem; border: 1px solid #d4d4d8; border-radius: 10px; }
+      .tiptap { outline: none; }
+      .tiptap p { margin: 0 0 .7em; }
+      button {
+        font: inherit; font-size: .88rem; padding: .35rem .8rem; margin: .9rem .4rem 0 0;
+        border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
+        color: inherit; cursor: pointer;
+      }
+      pre {
+        margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
+        background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
+        font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        .box, button { border-color: #3f3f46; }
+        pre { background: #18181b; border-color: #27272a; }
+        p.sub { color: #a1a1aa; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>wordpaste + Vue</h1>
+    <p class="sub">
+      Real Vue 3, no build step. Copy from Word and paste below.
+      <a href="../">Back to the playground</a>
+    </p>
+
+    <div id="app"></div>
+    <pre id="code"></pre>
+
+    <script type="module">
+      import { createApp, h as vh, onBeforeUnmount, shallowRef } from 'https://esm.sh/vue@3';
+      import { EditorContent, useEditor } from 'https://esm.sh/@tiptap/vue-3@3?deps=vue@3';
+      import { Extension } from 'https://esm.sh/@tiptap/core@3';
+      import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
+      import {
+        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
+      } from 'https://esm.sh/wordpaste';
+
+      const Mathematics = mathMod.Mathematics ?? mathMod.default;
+
+      // The whole integration — identical to any other framework.
+      const WordPaste = Extension.create({
+        name: 'wordPaste',
+        transformPastedHTML(html) {
+          return stripInlineColors(
+            isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+          );
+        },
+      });
+
+      const SAMPLE =
+        '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">' +
+        '<p class=MsoNormal style="text-align:center;font-family:Calibri">' +
+        'Darcy&#8211;Weisbach head loss<o:p></o:p></p>' +
+        '<p class=MsoNormal><m:oMath><m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
+        '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r><m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup>' +
+        '</m:sSup></m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath>' +
+        '<img src="file:///C:/Users/me/clip_image001.png"><o:p></o:p></p></html>';
+
+      createApp({
+        setup() {
+          const editor = useEditor({
+            extensions: [StarterKit, WordPaste, Mathematics],
+            content: '<p>Paste from Word here…</p>',
+          });
+
+          onBeforeUnmount(() => editor.value?.destroy());
+
+          return () => [
+            vh(EditorContent, { editor: editor.value, class: 'box' }),
+            vh(
+              'button',
+              {
+                id: 'sample',
+                onClick: () =>
+                  editor.value?.commands.setContent(stripInlineColors(cleanWordHtml(SAMPLE))),
+              },
+              'Load a Word sample',
+            ),
+          ];
+        },
+      }).mount('#app');
+
+      document.getElementById('code').textContent = `<script setup>
+import { EditorContent, useEditor } from '@tiptap/vue-3';
+import { Extension } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+const WordPaste = Extension.create({
+  name: 'wordPaste',
+  transformPastedHTML(html) {
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
+  },
+});
+
+const editor = useEditor({
+  extensions: [StarterKit, WordPaste],
+  content: '<p>Paste from Word here…</p>',
+});
+<\/script>
+
+<template>
+  <EditorContent :editor="editor" />
+</template>`;
+    </script>
+  </body>
+</html>

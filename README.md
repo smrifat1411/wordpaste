@@ -40,7 +40,7 @@ build. Open it and paste from Word.
 - [Quick start](#quick-start)
 - [Showing the maths](#showing-the-maths) — **read this if equations look wrong**
 - [What it handles](#what-it-handles)
-- [Use it with](#use-it-with) — [Plain JavaScript](#plain-javascript) · [Tiptap](#tiptap) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [React, Vue, Svelte](#react-vue-svelte) · [Node](#node)
+- [Use it with](#use-it-with) — [Plain JavaScript](#plain-javascript) · [Tiptap](#tiptap) · [React](#react) · [Next.js](#nextjs) · [Vue](#vue) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Node](#node)
 - [API](#api)
 - [Equations](#equations)
 - [Limits](#limits)
@@ -255,11 +255,96 @@ Lexical's default nodes have no maths node, so an equation lands as its LaTeX
 text. Rendering it is your node set's business — see
 [Showing the maths](#showing-the-maths).
 
-### React, Vue, Svelte
+### React
 
-Nothing extra to install and no framework build. This package has no UI and no
-state — it is a function that takes a string and returns a string. Use whichever
-editor you use above; the code is identical inside a component.
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/react.html)**
+
+No React build of wordpaste exists and none is needed — it is a function, not a
+component. The extension goes outside the component; only the editor hook goes
+inside.
+
+```jsx
+'use client';
+
+import { useEditor, EditorContent } from '@tiptap/react';
+import { Extension } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+const WordPaste = Extension.create({
+  name: 'wordPaste',
+  transformPastedHTML(html) {
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
+  },
+});
+
+export function WordEditor() {
+  const editor = useEditor({
+    extensions: [StarterKit, WordPaste],
+    content: '<p>Paste from Word here…</p>',
+  });
+
+  return <EditorContent editor={editor} />;
+}
+```
+
+### Next.js
+
+Same component as above, with one rule that matters:
+
+> **Importing wordpaste on the server is safe. Calling it there is not.**
+
+Verified: importing the package in Node succeeds, but calling `cleanWordHtml`
+outside a browser throws `ReferenceError: DOMParser is not defined`.
+
+In practice that means the editor component needs `'use client'` — which it
+needs anyway, since paste is a browser event. You do **not** need
+`next/dynamic` or `ssr: false`; the import itself is harmless because the
+package touches no DOM at module scope.
+
+If you genuinely need to clean HTML on the server — a background job, an API
+route — supply a DOM first:
+
+```js
+import { JSDOM } from 'jsdom';
+globalThis.DOMParser = new JSDOM().window.DOMParser;
+```
+
+### Vue
+
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/vue.html)**
+
+```vue
+<script setup>
+import { EditorContent, useEditor } from '@tiptap/vue-3';
+import { Extension } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+const WordPaste = Extension.create({
+  name: 'wordPaste',
+  transformPastedHTML(html) {
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
+  },
+});
+
+const editor = useEditor({
+  extensions: [StarterKit, WordPaste],
+  content: '<p>Paste from Word here…</p>',
+});
+</script>
+
+<template>
+  <EditorContent :editor="editor" />
+</template>
+```
+
+Svelte, Solid and Angular are the same shape — the wiring lives in the editor,
+not the framework.
 
 ### Node
 
