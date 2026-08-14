@@ -1,5 +1,5 @@
 {
-  "name": "word-paste-cleaner",
+  "name": "wordpaste",
   "version": "0.1.0",
   "description": "Clean Microsoft Word clipboard HTML and turn Word equations into editable LaTeX. Editor-agnostic, zero dependencies.",
   "keywords": [

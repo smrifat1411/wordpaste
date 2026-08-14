@@ -1,4 +1,4 @@
-# word-paste-cleaner
+# wordpaste
 
 Clean Microsoft Word clipboard HTML, and turn Word's equations into **editable
 LaTeX** instead of pictures.
@@ -6,7 +6,7 @@ LaTeX** instead of pictures.
 Editor-agnostic. Zero runtime dependencies. MIT.
 
 ```bash
-npm install word-paste-cleaner
+npm install wordpaste
 ```
 
 ## Why
@@ -25,7 +25,7 @@ This does both parts, in any editor.
 ## Use
 
 ```ts
-import { isWordHtml, cleanWordHtml, stripInlineColors } from 'word-paste-cleaner';
+import { isWordHtml, cleanWordHtml, stripInlineColors } from 'wordpaste';
 
 const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
 ```
