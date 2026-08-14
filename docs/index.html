@@ -122,6 +122,21 @@
       .doc.raw { font-family: Calibri, Carlito, "Segoe UI", sans-serif; }
       .doc[data-theme='dark'] { background: #0b0b0e; color: #e4e4e7; }
       .doc img { max-width: 100%; }
+      /* Word points images at the writer's own disk. Left unstyled these render
+         as a neat empty box, which reads as content rather than a dead link. */
+      .doc.raw img:not([src^='http']):not([src^='data:']) {
+        display: block; min-width: 180px; min-height: 90px;
+        border: 2px dashed var(--bad); border-radius: 8px;
+        background: color-mix(in srgb, var(--bad) 7%, transparent);
+        position: relative;
+      }
+      .doc.raw img:not([src^='http']):not([src^='data:'])::after {
+        content: 'broken link — file:// on the writer\'s computer';
+        position: absolute; inset: 0; display: flex;
+        align-items: center; justify-content: center; text-align: center;
+        padding: 0 .6rem; font-size: .78rem; color: var(--bad);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
       textarea.panel {
         display: block; width: 100%; padding: 0.9rem; resize: vertical;
         background: var(--bg); color: var(--fg); border: 0; outline: none;
@@ -222,6 +237,7 @@
         <button class="chip" data-sample="document">Word · text + image</button>
         <button class="chip" data-sample="mathml">LibreOffice · MathML</button>
         <button class="chip" data-sample="docs">Google Docs · dark theme</button>
+        <button class="chip" id="reset" title="Reload the current sample">Reset</button>
       </div>
 
       <p id="caption"></p>
@@ -454,6 +470,8 @@ new Editor({
         editing = null;
       });
 
+      let current = 'equation';
+
       const setChrome = (key) => {
         mathbar.hidden = true;
         editing = null;
@@ -467,9 +485,12 @@ new Editor({
       };
 
       const clearChips = () =>
-        document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+        document
+          .querySelectorAll('.chip[data-sample]')
+          .forEach((c) => c.setAttribute('aria-pressed', 'false'));
 
       const load = (key, button) => {
+        current = key;
         clearChips();
         button?.setAttribute('aria-pressed', 'true');
         setChrome(key);
@@ -477,12 +498,13 @@ new Editor({
       };
 
       beforeSrc.addEventListener('input', () => {
+        current = null;
         clearChips();
         setChrome(null);
         editor.commands.setContent(showComparison(beforeSrc.value));
       });
 
-      document.querySelectorAll('.chip').forEach((button) => {
+      document.querySelectorAll('.chip[data-sample]').forEach((button) => {
         button.setAttribute('aria-pressed', 'false');
         button.addEventListener('click', () => load(button.dataset.sample, button));
       });
@@ -500,6 +522,11 @@ new Editor({
       editor.view.dom.addEventListener('paste', () => {
         clearChips();
         setChrome(null);
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        if (current) load(current, document.querySelector(`[data-sample="${current}"]`));
+        else editor.commands.setContent(showComparison(beforeSrc.value));
       });
 
       load('equation', document.querySelector('[data-sample="equation"]'));
