@@ -244,9 +244,6 @@ Clean Word paste is a paid feature nearly everywhere:
 | tinymce-word-paste-filter | Yes | Yes | No |
 | **wordpaste** | **Yes, MIT** | **Yes** | **Yes** |
 
-Extracted from a Bangladeshi exam-preparation LMS, where teachers write question
-papers in Word and every equation matters.
-
 ## Licence
 
 MIT
