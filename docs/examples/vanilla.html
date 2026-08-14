@@ -29,6 +29,13 @@
         border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
         color: inherit; cursor: pointer;
       }
+      .warn {
+        margin-top: 1.5rem; padding: .8rem 1rem; font-size: .9rem;
+        background: #fffbeb; border: 1px solid #fde68a; border-radius: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .warn { background: #2a1f05; border-color: #78500a; }
+      }
       pre {
         margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
         background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
@@ -50,6 +57,14 @@
 
     <div id="editor" contenteditable="true">Paste from Word here…</div>
     <button id="sample">Load a Word sample</button>
+
+    <p class="warn">
+      This page inserts the cleaned HTML directly. wordpaste is not a sanitiser
+      — if you store pasted content or show it to other users, run it through
+      <a href="https://github.com/cure53/DOMPurify">DOMPurify</a> first. Editors
+      like Tiptap drop dangerous markup via their schema; a bare
+      <code>contenteditable</code> does not.
+    </p>
 
     <pre id="code"></pre>
 

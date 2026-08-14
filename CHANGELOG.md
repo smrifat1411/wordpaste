@@ -4,6 +4,18 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## Unreleased
+
+### Documentation
+
+- Added `SECURITY.md` and a Security section to the README. wordpaste removes
+  Word's formatting junk, **not** dangerous markup — `<script>`, `<iframe>`,
+  inline event handlers and `javascript:` URLs pass through. That is safe inside
+  Tiptap, ProseMirror or Lexical, whose schemas drop them, but not if you insert
+  the output with `innerHTML` yourself. Sanitise with DOMPurify in that case.
+
+  No behaviour changed; this was always true and was simply undocumented.
+
 ## 0.5.0
 
 ### Added

@@ -212,3 +212,23 @@ describe('transformPastedHTML', () => {
     expect(asProseMirrorCallsIt('<p>hi</p>', { some: 'view' })).toBe('<p>hi</p>');
   });
 });
+
+// Documented contract, not an oversight: sanitising is DOMPurify's job, and a
+// half-done version here would be more dangerous than none. See SECURITY.md.
+describe('does not sanitise', () => {
+  const word = '<html xmlns:o="urn:schemas-microsoft-com:office:office"><p>hi</p>';
+
+  it.each([
+    ['script tag', '<script>alert(1)</script>'],
+    ['event handler', '<b onclick="alert(1)">x</b>'],
+    ['javascript: url', '<a href="javascript:alert(1)">x</a>'],
+    ['iframe', '<iframe src="https://evil"></iframe>'],
+  ])('leaves a %s alone', (_label, payload) => {
+    expect(transformPastedHTML(word + payload)).toContain(payload);
+  });
+
+  it('drops a leading script only because parsing puts it in <head>', () => {
+    // Not protection — do not rely on it. Anything after body content survives.
+    expect(transformPastedHTML('<html xmlns:o="urn:schemas-microsoft-com:office:office"><script>alert(1)</script>')).toBe('');
+  });
+});

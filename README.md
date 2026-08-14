@@ -47,6 +47,7 @@ new Editor({ editorProps: { transformPastedHTML } });
 - [Frameworks](#frameworks) — [React](#react) · [Next.js](#nextjs) · [Vue](#vue)
 - [API](#api)
 - [Equations](#equations)
+- [Security](#security)
 - [Limits](#limits)
 - [Why this exists](#why-this-exists)
 
@@ -266,6 +267,10 @@ element.addEventListener('paste', (event) => {
 });
 ```
 
+This inserts HTML directly, so sanitise the result before you store it or show
+it to anyone else — see [Security](#security). Editors like Tiptap do this for
+you; a bare `contenteditable` does not.
+
 ---
 
 # Frameworks
@@ -401,6 +406,28 @@ Word emits as plain text (× ÷ ≥ ≤ ≠ ± ∞ ⇒ π θ …), which KaTeX c
 
 Equations land **inline** so they flow with the text instead of becoming
 full-width centred bands.
+
+## Security
+
+**wordpaste is not a sanitiser.** It removes Word's formatting junk, not
+dangerous markup — `<script>`, `<iframe>`, inline `onclick`/`onerror` handlers
+and `javascript:` URLs pass straight through.
+
+If the output goes into Tiptap, ProseMirror or Lexical, their schema drops all
+of that before rendering, so nothing more is needed. **If you insert it yourself
+with `innerHTML` or `insertHTML`, sanitise first:**
+
+```js
+import DOMPurify from 'dompurify';
+import { transformPastedHTML } from 'wordpaste';
+
+element.innerHTML = DOMPurify.sanitize(transformPastedHTML(html), {
+  ADD_ATTR: ['data-latex', 'data-type'],
+});
+```
+
+`ADD_ATTR` keeps the equation attributes, which DOMPurify strips by default.
+See [SECURITY.md](./SECURITY.md).
 
 ## Limits
 
