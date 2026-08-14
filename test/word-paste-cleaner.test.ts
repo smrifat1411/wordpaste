@@ -1,0 +1,126 @@
+import { describe, it, expect } from 'vitest';
+
+import {
+  cleanWordHtml,
+  isWordHtml,
+  hasWordMath,
+  stripInlineColors,
+} from '../src/word-paste-cleaner.js';
+
+const inlineMath = (latex: string) =>
+  `<span data-type="inline-math" data-latex="${latex}"></span>`;
+
+describe('isWordHtml', () => {
+  it('matches Word/Office clipboard markers', () => {
+    expect(isWordHtml('<html xmlns:o="urn:schemas-microsoft-com:office">')).toBe(
+      true,
+    );
+    expect(isWordHtml('<p style="mso-bidi-font-size:11pt">x</p>')).toBe(true);
+    expect(isWordHtml('<!--[if gte mso 9]><xml><![endif]-->')).toBe(true);
+  });
+
+  it('does not match ordinary HTML', () => {
+    expect(isWordHtml('<p>hello <b>world</b></p>')).toBe(false);
+  });
+});
+
+describe('hasWordMath', () => {
+  it('is true for OMML and for the msEquation fallback block', () => {
+    expect(hasWordMath('<m:oMath><m:r>x</m:r></m:oMath>')).toBe(true);
+    expect(hasWordMath('<!--[if gte msEquation 12]><math/><![endif]-->')).toBe(
+      true,
+    );
+  });
+
+  it('is false for a Word paste with no equations', () => {
+    expect(hasWordMath('<p class="MsoNormal">plain text</p>')).toBe(false);
+  });
+});
+
+describe('cleanWordHtml', () => {
+  it('converts OMML to an editable math node', () => {
+    expect(cleanWordHtml('<p><m:oMath><m:r>x</m:r></m:oMath></p>')).toBe(
+      `<p>${inlineMath('x')}</p>`,
+    );
+  });
+
+  it('converts a display equation (oMathPara) inline, not as a block band', () => {
+    expect(
+      cleanWordHtml('<m:oMathPara><m:oMath><m:r>x</m:r></m:oMath></m:oMathPara>'),
+    ).toBe(inlineMath('x'));
+  });
+
+  it('converts standalone MathML', () => {
+    expect(
+      cleanWordHtml('<math><mfrac><mi>a</mi><mi>b</mi></mfrac></math>'),
+    ).toBe(inlineMath('\\frac{a}{b}'));
+  });
+
+  it('unwraps the msEquation conditional comment so its math is converted', () => {
+    expect(
+      cleanWordHtml(
+        '<!--[if gte msEquation 12]><math><mi>x</mi></math><![endif]-->',
+      ),
+    ).toBe(inlineMath('x'));
+  });
+
+  it("drops Word's rasterized equation fallback instead of keeping a picture", () => {
+    // Word pairs every equation with a downlevel <![if !msEquation]> image.
+    const html =
+      '<m:oMath><m:r>x</m:r></m:oMath>' +
+      '<![if !msEquation]><img src="https://cdn/equation.png"><![endif]>';
+    expect(cleanWordHtml(html)).toBe(inlineMath('x'));
+  });
+
+  it('strips inline styles and mso-* classes', () => {
+    expect(
+      cleanWordHtml(
+        '<p class="MsoNormal" style="mso-bidi-font-size:11pt">hi</p>',
+      ),
+    ).toBe('<p>hi</p>');
+  });
+
+  it('keeps a non-mso class', () => {
+    expect(cleanWordHtml('<p class="intro">hi</p>')).toBe(
+      '<p class="intro">hi</p>',
+    );
+  });
+
+  it('removes namespace-prefixed leftovers such as <o:p>', () => {
+    expect(cleanWordHtml('<p>a<o:p></o:p></p>')).toBe('<p>a</p>');
+  });
+
+  it('drops dead file:// images but keeps real ones', () => {
+    expect(
+      cleanWordHtml(
+        '<img src="file:///C:/Users/x/clip.png"><img src="https://cdn/real.png">',
+      ),
+    ).toBe('<img src="https://cdn/real.png">');
+  });
+
+  it('honours a custom renderMath so non-TipTap editors can use it', () => {
+    expect(
+      cleanWordHtml('<m:oMath><m:r>x</m:r></m:oMath>', {
+        renderMath: (latex, block) => (block ? `$$${latex}$$` : `$${latex}$`),
+      }),
+    ).toBe('$x$');
+  });
+});
+
+describe('stripInlineColors', () => {
+  it('drops colour but keeps the other declarations', () => {
+    expect(
+      stripInlineColors('<p style="color: rgb(0,0,0); text-align: center">x</p>'),
+    ).toBe('<p style="text-align: center">x</p>');
+  });
+
+  it('drops background-color too', () => {
+    expect(stripInlineColors('<p style="background-color: #fff">x</p>')).toBe(
+      '<p>x</p>',
+    );
+  });
+
+  it('returns HTML with no style attribute untouched', () => {
+    expect(stripInlineColors('<p>x</p>')).toBe('<p>x</p>');
+  });
+});
