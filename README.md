@@ -1,9 +1,39 @@
-# wordpaste
+<h1 align="center">wordpaste</h1>
 
-Clean Microsoft Word clipboard HTML, and keep the equations **editable** instead
-of turning them into pictures.
+<p align="center">
+  Clean Microsoft Word clipboard HTML — and keep the equations <b>editable</b>.
+</p>
 
-2.4 kB gzipped. Zero dependencies. No framework. MIT.
+<p align="center">
+  <a href="https://www.npmjs.com/package/wordpaste"><img src="https://img.shields.io/npm/v/wordpaste.svg" alt="npm version"></a>
+  <a href="https://bundlephobia.com/package/wordpaste"><img src="https://img.shields.io/bundlephobia/minzip/wordpaste.svg" alt="minzipped size"></a>
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="zero dependencies">
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/wordpaste.svg" alt="MIT license"></a>
+</p>
+
+- **Equations survive.** Word's maths becomes editable LaTeX, not a screenshot.
+- **Tiny.** 2.4 kB gzipped, zero dependencies.
+- **Any editor.** Tiptap, Lexical, plain `contenteditable`. No framework.
+- **One function.** HTML string in, clean HTML string out.
+
+```js
+import { isWordHtml, cleanWordHtml } from 'wordpaste';
+
+const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
+```
+
+## Contents
+
+- [Install](#install)
+- [The problem](#the-problem)
+- [Integrations](#integrations) — [Tiptap](#tiptap) · [Lexical](#lexical) · [Plain JavaScript](#plain-javascript) · [React](#react) · [Node](#node--server-side)
+- [API](#api)
+- [Equations](#equations)
+- [Limits](#limits)
+- [Why this exists](#why-this-exists)
+- [Contributing](#contributing)
+
+## Install
 
 ```bash
 npm install wordpaste
@@ -20,11 +50,9 @@ break:
 - **Equations become pictures.** Word puts every equation on the clipboard
   twice — once as real maths (`<m:oMath>`) and once as a screenshot. Editors
   take the screenshot. The author can no longer fix a typo in their own formula.
-- Images point at `file:///C:/Users/...`, which is a dead link on the web.
+- Images point at `file:///C:/Users/...`, a dead link on the web.
 - Google Docs pastes `color: rgb(0,0,0)`, so on a dark theme the text is black
   on black.
-
-## What it does
 
 Real input and output from this package:
 
@@ -34,7 +62,7 @@ Real input and output from this package:
   Head loss is given by<o:p></o:p></p>
 <p class="MsoNormal" style="mso-pagination:widow-orphan">
   <m:oMathPara><m:oMath>…</m:oMath></m:oMathPara>
-  <![if !msEquation]><img src="file:///C:/Users/rifat/AppData/clip_image001.png"><![endif]>
+  <![if !msEquation]><img src="file:///C:/Users/me/AppData/clip_image001.png"><![endif]>
 </p>
 ```
 
@@ -47,22 +75,13 @@ Real input and output from this package:
 The junk is gone, the dead image is gone, and the equation survived as LaTeX the
 author can still edit.
 
-## Quick start
-
-```js
-import { isWordHtml, cleanWordHtml } from 'wordpaste';
-
-const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
-```
-
-That is the whole idea. HTML string in, HTML string out. Wire it wherever your
-editor lets you see pasted HTML before it is parsed.
-
 ## Integrations
+
+Wire it wherever your editor lets you see pasted HTML before it is parsed.
 
 ### Tiptap
 
-`transformPastedHTML` is a documented top-level method on a Tiptap
+`transformPastedHTML` is a documented top-level method on a
 [custom extension](https://tiptap.dev/docs/editor/extensions/custom-extensions/create-new).
 
 ```js
@@ -79,7 +98,7 @@ export const WordPaste = Extension.create({
 });
 ```
 
-Then add `WordPaste` to your `extensions` array. It pairs with
+Add `WordPaste` to your `extensions` array. It pairs with
 [`@tiptap/extension-mathematics`](https://tiptap.dev/docs/editor/extensions/nodes/mathematics),
 whose markup this package emits by default.
 
@@ -119,7 +138,7 @@ configExtension(ClipboardImportExtension, {
 });
 ```
 
-### Plain JavaScript / contenteditable
+### Plain JavaScript
 
 No editor library needed — the native paste event carries the HTML:
 
@@ -135,9 +154,9 @@ element.addEventListener('paste', (event) => {
 
 ### React
 
-Nothing extra. There is no React build and none is needed — this package has no
-UI and no state, so a React wrapper would only add a layer. Use whichever editor
-you use above; the code is identical.
+Nothing extra to install. There is no React build and none is needed — this
+package has no UI and no state, so a React wrapper would only add a layer.
+Use whichever editor you use above; the code is identical.
 
 ### Node / server-side
 
@@ -153,7 +172,7 @@ globalThis.DOMParser = new JSDOM().window.DOMParser;
 
 ## API
 
-### `cleanWordHtml(html, options?)`
+### `cleanWordHtml(html, options?): string`
 
 The main one. Runs the full pipeline:
 
@@ -168,28 +187,30 @@ The main one. Runs the full pipeline:
 5. Removes namespaced elements (`<o:p>`, `<w:*>`, `<v:*>`), inline styles,
    `mso-*` classes, `file://` images and empty paragraphs.
 
-### `isWordHtml(html)`
+`options.renderMath` — see [Equations](#equations).
 
-True for Word and Office clipboard HTML. Cheap string check — run it first so
-ordinary pastes are untouched.
+### `isWordHtml(html): boolean`
 
-### `hasWordMath(html)`
+True for Word and Office clipboard HTML. A cheap string check — run it first so
+ordinary pastes stay untouched.
+
+### `hasWordMath(html): boolean`
 
 True when the paste carries recoverable equations. Use it to skip Word's
-screenshot in a file-paste handler, as shown in the Tiptap section.
+screenshot in a file-paste handler, as shown in [Tiptap](#tiptap).
 
-### `stripInlineColors(html)`
+### `stripInlineColors(html): string`
 
 Drops `color` and `background-color` only, keeping `text-align` and everything
 else. Google Docs carries no `mso-` markers, so `isWordHtml` will not catch it —
 run this on **every** paste to protect a dark theme.
 
-### `ommlToLatex(omml)`
+### `ommlToLatex(omml): string`
 
 Word's equation markup to a LaTeX string, on its own. Useful if you are reading
 a `.docx` yourself.
 
-### `mathNodeHtml(latex, block)`
+### `mathNodeHtml(latex, block): string`
 
 The default equation renderer. Exported so you can wrap it.
 
@@ -244,6 +265,14 @@ Clean Word paste is a paid feature nearly everywhere:
 | tinymce-word-paste-filter | Yes | Yes | No |
 | **wordpaste** | **Yes, MIT** | **Yes** | **Yes** |
 
+## Contributing
+
+Bug reports are welcome — please include the raw clipboard HTML that
+reproduces it. Pull requests are welcome too; run `npm test` before opening one.
+
+New features are considered but not promised. This package is deliberately
+small, and staying small is the point.
+
 ## Licence
 
-MIT
+[MIT](./LICENSE)

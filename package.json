@@ -15,6 +15,15 @@
     "prosemirror"
   ],
   "license": "MIT",
+  "author": "Rifat Hossain",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smrifat1411/wordpaste.git"
+  },
+  "homepage": "https://github.com/smrifat1411/wordpaste#readme",
+  "bugs": {
+    "url": "https://github.com/smrifat1411/wordpaste/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
