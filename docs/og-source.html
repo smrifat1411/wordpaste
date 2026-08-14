@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #09090b;
+        color: #f4f4f5;
+        font: 400 16px/1.5 -apple-system, "SF Pro Text", "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 58px 72px;
+        position: relative;
+        overflow: hidden;
+      }
+      .glow {
+        position: absolute;
+        width: 620px;
+        height: 620px;
+        right: -180px;
+        top: -220px;
+        background: radial-gradient(circle, rgba(52, 211, 153, 0.16), transparent 65%);
+      }
+      .eyebrow {
+        display: inline-block;
+        align-self: flex-start;
+        padding: 7px 16px;
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #34d399;
+        background: rgba(52, 211, 153, 0.12);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 999px;
+        margin-bottom: 26px;
+      }
+      h1 {
+        font-size: 62px;
+        line-height: 1.04;
+        letter-spacing: -0.035em;
+        font-weight: 700;
+        max-width: 17ch;
+      }
+      h1 em { font-style: normal; color: #34d399; }
+      .compare {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-top: 38px;
+      }
+      .card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 26px;
+        border-radius: 14px;
+        border: 1px solid #27272a;
+        background: #111114;
+        font-size: 25px;
+      }
+      .card.bad { border-color: rgba(248, 113, 113, 0.4); }
+      .card.good { border-color: rgba(52, 211, 153, 0.45); }
+      .label { font-size: 17px; color: #a1a1aa; letter-spacing: 0.02em; }
+      .broken {
+        width: 52px; height: 40px;
+        border: 2px dashed #f87171;
+        border-radius: 5px;
+        color: #f87171;
+        font-size: 22px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .arrow { font-size: 34px; color: #52525b; }
+      .math {
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic;
+        font-size: 31px;
+        display: flex; align-items: center; gap: 5px;
+      }
+      .frac { display: inline-flex; flex-direction: column; align-items: center; font-size: 24px; }
+      .frac .num { border-bottom: 1.5px solid #f4f4f5; padding: 0 7px 2px; }
+      .frac .den { padding: 2px 7px 0; }
+      sub, sup { font-size: 0.62em; }
+      footer {
+        display: flex; align-items: center; gap: 22px;
+        margin-top: 40px;
+        font-size: 24px; color: #a1a1aa;
+      }
+      footer code {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        color: #f4f4f5;
+        background: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 9px;
+        padding: 9px 18px;
+        font-size: 24px;
+      }
+      .sep { color: #3f3f46; }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+    <span class="eyebrow">MIT · 2.4 kB · zero dependencies</span>
+    <h1>Paste from Word without losing your <em>equations</em></h1>
+
+    <div class="compare">
+      <div class="card bad">
+        <span class="broken">⨯</span>
+        <span class="label">every other editor<br />flat screenshot</span>
+      </div>
+      <span class="arrow">→</span>
+      <div class="card good">
+        <span class="math">
+          Z<sub>A</sub> − Z<sub>B</sub> = ƒ
+          <span class="frac">
+            <span class="num">LV<sup>2</sup></span>
+            <span class="den">2gD</span>
+          </span>
+        </span>
+        <span class="label">wordpaste<br />editable LaTeX</span>
+      </div>
+    </div>
+
+    <footer>
+      <code>npm i wordpaste</code>
+      <span class="sep">|</span>
+      <span>Tiptap · Lexical · ProseMirror · plain JS</span>
+    </footer>
+  </body>
+</html>
