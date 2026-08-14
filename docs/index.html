@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wordpaste — paste from Word and keep your equations</title>
+    <meta
+      name="description"
+      content="Live demo: paste from Microsoft Word and watch the mso- junk disappear while the equations stay editable."
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #18181b;
+        --muted: #71717a;
+        --line: #e4e4e7;
+        --soft: #fafafa;
+        --accent: #059669;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b0b0e;
+          --fg: #e4e4e7;
+          --muted: #a1a1aa;
+          --line: #27272a;
+          --soft: #131317;
+          --accent: #34d399;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          15px/1.6 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+      }
+      .tag {
+        margin: 0 0 1rem;
+        color: var(--muted);
+      }
+      .links a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 1rem;
+        font-size: 0.9rem;
+      }
+      .links a:hover {
+        text-decoration: underline;
+      }
+      .how {
+        margin: 2rem 0 1rem;
+        padding: 0.9rem 1rem;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 0.92rem;
+      }
+      .how b {
+        color: var(--accent);
+      }
+      .grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .pane h2 {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: 0 0 0.5rem;
+        font-weight: 600;
+      }
+      .box {
+        min-height: 190px;
+        max-height: 340px;
+        overflow: auto;
+        padding: 0.85rem;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      #drop {
+        outline: none;
+        border-style: dashed;
+      }
+      #drop:focus {
+        border-color: var(--accent);
+        border-style: solid;
+      }
+      #drop:empty::before {
+        content: "Click here, then paste (⌘V / Ctrl+V)";
+        color: var(--muted);
+      }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font:
+          12px/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      #stats {
+        margin: 1rem 0 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      #stats b {
+        color: var(--fg);
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      footer a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>wordpaste</h1>
+      <p class="tag">
+        Paste from Microsoft Word. The <code>mso-</code> junk goes, the equations
+        stay editable.
+      </p>
+      <p class="links">
+        <a href="https://www.npmjs.com/package/wordpaste">npm</a>
+        <a href="https://github.com/smrifat1411/wordpaste">GitHub</a>
+      </p>
+
+      <div class="how">
+        <b>Try it:</b> open a Word document with an equation in it, select some
+        text, copy, then click the left box and paste. Google Docs and
+        LibreOffice work too. Nothing is uploaded — it all runs in your browser.
+      </div>
+
+      <div class="grid">
+        <section class="pane">
+          <h2>Paste here</h2>
+          <div id="drop" class="box" contenteditable="true"></div>
+        </section>
+        <section class="pane">
+          <h2>Cleaned result</h2>
+          <div id="out" class="box"></div>
+        </section>
+      </div>
+
+      <p id="stats"></p>
+
+      <div class="grid" style="margin-top: 1.5rem">
+        <section class="pane">
+          <h2>Raw clipboard HTML</h2>
+          <div class="box"><pre id="before"></pre></div>
+        </section>
+        <section class="pane">
+          <h2>After cleanWordHtml()</h2>
+          <div class="box"><pre id="after"></pre></div>
+        </section>
+      </div>
+
+      <footer>
+        <a href="https://github.com/smrifat1411/wordpaste">wordpaste</a> — MIT.
+        Equations rendered with
+        <a href="https://katex.org">KaTeX</a> to show the LaTeX is real; the
+        package itself has no dependencies.
+      </footer>
+    </main>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+      integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module">
+      import { isWordHtml, cleanWordHtml, stripInlineColors } from 'https://esm.sh/wordpaste';
+
+      const drop = document.getElementById('drop');
+      const out = document.getElementById('out');
+      const before = document.getElementById('before');
+      const after = document.getElementById('after');
+      const stats = document.getElementById('stats');
+
+      // Render the math nodes so the LaTeX is visibly real, not just a string.
+      const renderMath = (root) => {
+        root.querySelectorAll('[data-latex]').forEach((el) => {
+          const display = el.dataset.type === 'block-math';
+          try {
+            katex.render(el.dataset.latex, el, { displayMode: display, throwOnError: false });
+          } catch {
+            el.textContent = el.dataset.latex;
+          }
+        });
+      };
+
+      drop.addEventListener('paste', (event) => {
+        const html = event.clipboardData?.getData('text/html');
+        if (!html) return;
+
+        event.preventDefault();
+
+        const clean = stripInlineColors(isWordHtml(html) ? cleanWordHtml(html) : html);
+
+        drop.innerHTML = html;
+        out.innerHTML = clean;
+        renderMath(out);
+
+        before.textContent = html;
+        after.textContent = clean;
+
+        const equations = (clean.match(/data-latex=/g) || []).length;
+        const saved = Math.max(0, Math.round((1 - clean.length / html.length) * 100));
+
+        stats.innerHTML =
+          `From Word: <b>${isWordHtml(html) ? 'yes' : 'no'}</b> · ` +
+          `${html.length.toLocaleString()} → <b>${clean.length.toLocaleString()}</b> characters ` +
+          `(<b>${saved}% smaller</b>) · equations kept editable: <b>${equations}</b>`;
+      });
+    </script>
+  </body>
+</html>

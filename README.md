@@ -11,25 +11,27 @@
   <a href="./LICENSE"><img src="https://img.shields.io/npm/l/wordpaste.svg" alt="MIT license"></a>
 </p>
 
+<p align="center">
+  <b><a href="https://smrifat1411.github.io/wordpaste/">Try the live demo →</a></b><br>
+  <sub>Copy from a Word document and paste it in. Runs entirely in your browser.</sub>
+</p>
+
+---
+
 - **Equations survive.** Word's maths becomes editable LaTeX, not a screenshot.
 - **Tiny.** 2.4 kB gzipped, zero dependencies.
 - **Any editor.** Tiptap, Lexical, plain `contenteditable`. No framework.
 - **One function.** HTML string in, clean HTML string out.
 
-```js
-import { isWordHtml, cleanWordHtml } from 'wordpaste';
-
-const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
-```
-
 ## Contents
 
 - [Install](#install)
-- [The problem](#the-problem)
+- [Usage](#usage)
 - [Integrations](#integrations) — [Tiptap](#tiptap) · [Lexical](#lexical) · [Plain JavaScript](#plain-javascript) · [React](#react) · [Node](#node--server-side)
 - [API](#api)
 - [Equations](#equations)
 - [Limits](#limits)
+- [What it actually fixes](#what-it-actually-fixes)
 - [Why this exists](#why-this-exists)
 - [Contributing](#contributing)
 
@@ -39,45 +41,18 @@ const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
 npm install wordpaste
 ```
 
-## The problem
+## Usage
 
-Someone writes in Word. They copy. They paste into your editor. Four things
-break:
+```js
+import { isWordHtml, cleanWordHtml } from 'wordpaste';
 
-- The HTML arrives full of `class="MsoNormal"`, `mso-bidi-font-size`,
-  `font-family:Calibri` and empty `<o:p>` tags, so your editor now carries
-  Word's design instead of yours.
-- **Equations become pictures.** Word puts every equation on the clipboard
-  twice — once as real maths (`<m:oMath>`) and once as a screenshot. Editors
-  take the screenshot. The author can no longer fix a typo in their own formula.
-- Images point at `file:///C:/Users/...`, a dead link on the web.
-- Google Docs pastes `color: rgb(0,0,0)`, so on a dark theme the text is black
-  on black.
-
-Real input and output from this package:
-
-```html
-<!-- IN — what the browser hands your editor -->
-<p class="MsoNormal" style="margin:0cm;mso-bidi-font-size:11.0pt;font-family:Calibri">
-  Head loss is given by<o:p></o:p></p>
-<p class="MsoNormal" style="mso-pagination:widow-orphan">
-  <m:oMathPara><m:oMath>…</m:oMath></m:oMathPara>
-  <![if !msEquation]><img src="file:///C:/Users/me/AppData/clip_image001.png"><![endif]>
-</p>
+const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
 ```
 
-```html
-<!-- OUT -->
-<p>Head loss is given by</p>
-<p><span data-type="inline-math" data-latex="{Z}_{A}=f\frac{L{V}^{2}}{2gD}"></span></p>
-```
-
-The junk is gone, the dead image is gone, and the equation survived as LaTeX the
-author can still edit.
+That is the whole idea. HTML string in, HTML string out. Wire it wherever your
+editor lets you see pasted HTML before it is parsed.
 
 ## Integrations
-
-Wire it wherever your editor lets you see pasted HTML before it is parsed.
 
 ### Tiptap
 
@@ -251,6 +226,42 @@ raw.
 - **Not a `.docx` reader.** This handles what Word puts on the clipboard. For
   files, use [`mammoth`](https://github.com/mwilliamson/mammoth.js) — and note it
   has no equation support, so `ommlToLatex` is useful alongside it.
+
+## What it actually fixes
+
+Someone writes in Word. They copy. They paste into your editor. Four things
+break:
+
+- The HTML arrives full of `class="MsoNormal"`, `mso-bidi-font-size`,
+  `font-family:Calibri` and empty `<o:p>` tags, so your editor now carries
+  Word's design instead of yours.
+- **Equations become pictures.** Word puts every equation on the clipboard
+  twice — once as real maths (`<m:oMath>`) and once as a screenshot. Editors
+  take the screenshot. The author can no longer fix a typo in their own formula.
+- Images point at `file:///C:/Users/...`, a dead link on the web.
+- Google Docs pastes `color: rgb(0,0,0)`, so on a dark theme the text is black
+  on black.
+
+Real input and output:
+
+```html
+<!-- IN — what the browser hands your editor -->
+<p class="MsoNormal" style="margin:0cm;mso-bidi-font-size:11.0pt;font-family:Calibri">
+  Head loss is given by<o:p></o:p></p>
+<p class="MsoNormal" style="mso-pagination:widow-orphan">
+  <m:oMathPara><m:oMath>…</m:oMath></m:oMathPara>
+  <![if !msEquation]><img src="file:///C:/Users/me/AppData/clip_image001.png"><![endif]>
+</p>
+```
+
+```html
+<!-- OUT -->
+<p>Head loss is given by</p>
+<p><span data-type="inline-math" data-latex="{Z}_{A}=f\frac{L{V}^{2}}{2gD}"></span></p>
+```
+
+The junk is gone, the dead image is gone, and the equation survived as LaTeX the
+author can still edit.
 
 ## Why this exists
 
