@@ -3,10 +3,30 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste — paste from Word and keep your equations</title>
+    <title>wordpaste playground — paste from Word, keep your equations</title>
     <meta
       name="description"
-      content="Live demo: paste from Microsoft Word and watch the mso- junk disappear while the equations stay editable."
+      content="Live playground for wordpaste: clean Microsoft Word clipboard HTML and keep the equations editable. Converts Word OMML and MathML to LaTeX. Free, MIT, zero dependencies."
+    />
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://smrifat1411.github.io/wordpaste/" />
+    <meta
+      property="og:title"
+      content="wordpaste — paste from Word, keep your equations"
+    />
+    <meta
+      property="og:description"
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.4 kB, zero dependencies, works with Tiptap, Lexical or plain contenteditable."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="wordpaste — paste from Word, keep your equations"
+    />
+    <meta
+      name="twitter:description"
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.4 kB, zero dependencies."
     />
     <link
       rel="stylesheet"
@@ -22,7 +42,9 @@
         --muted: #71717a;
         --line: #e4e4e7;
         --soft: #fafafa;
+        --raised: #f4f4f5;
         --accent: #059669;
+        --warn: #b45309;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -31,7 +53,9 @@
           --muted: #a1a1aa;
           --line: #27272a;
           --soft: #131317;
+          --raised: #1c1c21;
           --accent: #34d399;
+          --warn: #fbbf24;
         }
       }
       * {
@@ -50,95 +74,209 @@
           sans-serif;
       }
       main {
-        max-width: 1100px;
+        max-width: 1180px;
         margin: 0 auto;
       }
+      header {
+        margin-bottom: 2rem;
+      }
       h1 {
-        margin: 0 0 0.25rem;
-        font-size: 1.75rem;
-        letter-spacing: -0.02em;
+        margin: 0 0 0.35rem;
+        font-size: 1.9rem;
+        letter-spacing: -0.025em;
       }
       .tag {
-        margin: 0 0 1rem;
+        margin: 0 0 0.85rem;
         color: var(--muted);
+        font-size: 1.02rem;
       }
       .links a {
         color: var(--accent);
         text-decoration: none;
-        margin-right: 1rem;
+        margin-right: 1.1rem;
         font-size: 0.9rem;
+        font-weight: 500;
       }
       .links a:hover {
         text-decoration: underline;
       }
-      .how {
-        margin: 2rem 0 1rem;
-        padding: 0.9rem 1rem;
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1rem;
         background: var(--soft);
         border: 1px solid var(--line);
-        border-radius: 8px;
-        font-size: 0.92rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
       }
-      .how b {
+      .toolbar .label {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-right: 0.25rem;
+        font-weight: 500;
+      }
+      button.chip {
+        font: inherit;
+        font-size: 0.86rem;
+        padding: 0.32rem 0.7rem;
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      button.chip:hover {
+        border-color: var(--accent);
         color: var(--accent);
       }
+      button.chip[aria-pressed='true'] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
       .grid {
         display: grid;
         gap: 1rem;
         grid-template-columns: 1fr 1fr;
+        align-items: start;
       }
-      @media (max-width: 800px) {
+      @media (max-width: 860px) {
         .grid {
           grid-template-columns: 1fr;
         }
       }
+      .pane {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--soft);
+      }
+      .pane > header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0.55rem 0.8rem;
+        background: var(--raised);
+        border-bottom: 1px solid var(--line);
+      }
       .pane h2 {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.07em;
         color: var(--muted);
-        margin: 0 0 0.5rem;
+        margin: 0;
         font-weight: 600;
       }
-      .box {
-        min-height: 190px;
-        max-height: 340px;
+      .tabs {
+        display: flex;
+        gap: 0.25rem;
+      }
+      button.tab {
+        font: inherit;
+        font-size: 0.76rem;
+        padding: 0.16rem 0.55rem;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button.tab[aria-selected='true'] {
+        background: var(--bg);
+        border-color: var(--line);
+        color: var(--fg);
+      }
+      .body {
+        height: 330px;
         overflow: auto;
         padding: 0.85rem;
-        background: var(--soft);
-        border: 1px solid var(--line);
-        border-radius: 8px;
       }
-      #drop {
+      textarea.body {
+        display: block;
+        width: 100%;
+        resize: vertical;
+        background: transparent;
+        color: var(--fg);
+        border: 0;
         outline: none;
-        border-style: dashed;
-      }
-      #drop:focus {
-        border-color: var(--accent);
-        border-style: solid;
-      }
-      #drop:empty::before {
-        content: "Click here, then paste (⌘V / Ctrl+V)";
-        color: var(--muted);
+        font:
+          12px/1.6 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
       }
       pre {
         margin: 0;
         white-space: pre-wrap;
         word-break: break-word;
         font:
-          12px/1.55 ui-monospace,
+          12px/1.6 ui-monospace,
           SFMono-Regular,
           Menlo,
           monospace;
       }
+      .hidden {
+        display: none;
+      }
+      #preview img {
+        max-width: 100%;
+      }
+
       #stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
         margin: 1rem 0 0;
+        padding: 0.85rem 1rem;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 10px;
         font-size: 0.88rem;
         color: var(--muted);
       }
       #stats b {
         color: var(--fg);
+        font-variant-numeric: tabular-nums;
       }
+      #stats .good {
+        color: var(--accent);
+      }
+
+      .live {
+        margin-top: 2rem;
+      }
+      .live h3 {
+        font-size: 0.95rem;
+        margin: 0 0 0.35rem;
+      }
+      .live p {
+        margin: 0 0 0.7rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      #drop {
+        min-height: 88px;
+        padding: 0.85rem;
+        background: var(--soft);
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        outline: none;
+      }
+      #drop:focus {
+        border-style: solid;
+        border-color: var(--accent);
+      }
+      #drop:empty::before {
+        content: "Click here, then press ⌘V or Ctrl+V";
+        color: var(--muted);
+      }
+
       footer {
         margin-top: 3rem;
         padding-top: 1.25rem;
@@ -149,55 +287,92 @@
       footer a {
         color: var(--accent);
       }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.92em;
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>wordpaste</h1>
-      <p class="tag">
-        Paste from Microsoft Word. The <code>mso-</code> junk goes, the equations
-        stay editable.
-      </p>
-      <p class="links">
-        <a href="https://www.npmjs.com/package/wordpaste">npm</a>
-        <a href="https://github.com/smrifat1411/wordpaste">GitHub</a>
-      </p>
+      <header>
+        <h1>wordpaste playground</h1>
+        <p class="tag">
+          Microsoft Word clipboard HTML in, clean HTML out — with the equations
+          still editable.
+        </p>
+        <p class="links">
+          <a href="https://www.npmjs.com/package/wordpaste">npm</a>
+          <a href="https://github.com/smrifat1411/wordpaste">GitHub</a>
+          <a href="https://github.com/smrifat1411/wordpaste#readme">Docs</a>
+        </p>
+      </header>
 
-      <div class="how">
-        <b>Try it:</b> open a Word document with an equation in it, select some
-        text, copy, then click the left box and paste. Google Docs and
-        LibreOffice work too. Nothing is uploaded — it all runs in your browser.
+      <div class="toolbar">
+        <span class="label">Load a sample:</span>
+        <button class="chip" data-sample="equation" aria-pressed="false">
+          Word · equation
+        </button>
+        <button class="chip" data-sample="document" aria-pressed="false">
+          Word · text + image
+        </button>
+        <button class="chip" data-sample="mathml" aria-pressed="false">
+          LibreOffice · MathML
+        </button>
+        <button class="chip" data-sample="docs" aria-pressed="false">
+          Google Docs · dark theme
+        </button>
       </div>
 
       <div class="grid">
         <section class="pane">
-          <h2>Paste here</h2>
-          <div id="drop" class="box" contenteditable="true"></div>
+          <header>
+            <h2>Input — clipboard HTML</h2>
+            <span style="font-size: 0.74rem; color: var(--muted)">editable</span>
+          </header>
+          <textarea
+            id="input"
+            class="body"
+            spellcheck="false"
+            aria-label="Clipboard HTML input"
+          ></textarea>
         </section>
+
         <section class="pane">
-          <h2>Cleaned result</h2>
-          <div id="out" class="box"></div>
+          <header>
+            <h2>Output</h2>
+            <div class="tabs" role="tablist">
+              <button class="tab" data-tab="preview" role="tab" aria-selected="true">
+                Preview
+              </button>
+              <button class="tab" data-tab="html" role="tab" aria-selected="false">
+                HTML
+              </button>
+            </div>
+          </header>
+          <div id="preview" class="body"></div>
+          <div id="html" class="body hidden"><pre id="htmlOut"></pre></div>
         </section>
       </div>
 
-      <p id="stats"></p>
+      <div id="stats"></div>
 
-      <div class="grid" style="margin-top: 1.5rem">
-        <section class="pane">
-          <h2>Raw clipboard HTML</h2>
-          <div class="box"><pre id="before"></pre></div>
-        </section>
-        <section class="pane">
-          <h2>After cleanWordHtml()</h2>
-          <div class="box"><pre id="after"></pre></div>
-        </section>
-      </div>
+      <section class="live">
+        <h3>Or paste straight from Word</h3>
+        <p>
+          Have Word, Google Docs or LibreOffice open? Copy anything and paste it
+          below — it fills the input above. Nothing leaves your browser.
+        </p>
+        <div id="drop" contenteditable="true"></div>
+      </section>
 
       <footer>
-        <a href="https://github.com/smrifat1411/wordpaste">wordpaste</a> — MIT.
-        Equations rendered with
-        <a href="https://katex.org">KaTeX</a> to show the LaTeX is real; the
-        package itself has no dependencies.
+        <a href="https://github.com/smrifat1411/wordpaste">wordpaste</a> — MIT,
+        zero dependencies. The samples are Word-shaped clipboard HTML: real
+        <code>mso-</code> attributes, real <code>&lt;m:oMath&gt;</code> markup.
+        Equations are drawn with <a href="https://katex.org">KaTeX</a> here to
+        show the LaTeX is genuine — the package itself renders nothing and
+        depends on nothing.
       </footer>
     </main>
 
@@ -207,49 +382,166 @@
       crossorigin="anonymous"
     ></script>
     <script type="module">
-      import { isWordHtml, cleanWordHtml, stripInlineColors } from 'https://esm.sh/wordpaste';
+      import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'https://esm.sh/wordpaste';
 
-      const drop = document.getElementById('drop');
-      const out = document.getElementById('out');
-      const before = document.getElementById('before');
-      const after = document.getElementById('after');
-      const stats = document.getElementById('stats');
+      const $ = (id) => document.getElementById(id);
+      const input = $('input');
+      const preview = $('preview');
+      const htmlOut = $('htmlOut');
+      const stats = $('stats');
+      const drop = $('drop');
 
-      // Render the math nodes so the LaTeX is visibly real, not just a string.
+      // Word's HTML clipboard shape: xmlns declarations, mso-* styling, MsoNormal
+      // classes, <o:p> spacers, and every equation shipped twice — once as OMML
+      // and once as a downlevel screenshot inside <![if !msEquation]>.
+      const SAMPLES = {
+        equation:
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
+          '      xmlns:w="urn:schemas-microsoft-com:office:word"\n' +
+          '      xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">\n' +
+          '<body>\n' +
+          '<p class=MsoNormal style=\'margin:0cm;mso-bidi-font-size:11.0pt;font-family:"Calibri",sans-serif\'>\n' +
+          '  Darcy&#8211;Weisbach head loss between two points:<o:p></o:p></p>\n' +
+          '<p class=MsoNormal style=\'mso-pagination:widow-orphan\'>\n' +
+          '<m:oMathPara><m:oMath>' +
+          '<m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
+          '<m:r>-</m:r>' +
+          '<m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>B</m:r></m:sub></m:sSub>' +
+          '<m:r>=f</m:r>' +
+          '<m:f><m:num><m:r>L</m:r>' +
+          '<m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup></m:sSup>' +
+          '</m:num><m:den><m:r>2gD</m:r></m:den></m:f>' +
+          '</m:oMath></m:oMathPara>\n' +
+          '<![if !msEquation]><img width=213 height=44\n' +
+          '  src="file:///C:/Users/me/AppData/Local/Temp/msohtmlclip1/clip_image001.png"><![endif]>\n' +
+          '<o:p></o:p></p>\n' +
+          '</body></html>',
+
+        document:
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
+          '      xmlns:w="urn:schemas-microsoft-com:office:word">\n' +
+          '<body lang=EN-GB style=\'word-wrap:break-word\'>\n' +
+          '<p class=MsoNormal style=\'margin-bottom:8.0pt;line-height:107%;\n' +
+          '  font-size:11.0pt;font-family:"Calibri",sans-serif;mso-fareast-language:EN-US\'>\n' +
+          '  <b style=\'mso-bidi-font-weight:normal\'>Question 4.</b> State the\n' +
+          '  <i style=\'mso-bidi-font-style:normal\'>continuity equation</i> and define each term.\n' +
+          '  <o:p></o:p></p>\n' +
+          '<p class=MsoNormal style=\'mso-pagination:widow-orphan;mso-bidi-font-size:11.0pt\'>\n' +
+          '  <img width=320 height=180\n' +
+          '    src="file:///C:/Users/me/AppData/Local/Temp/msohtmlclip1/clip_image002.jpg">\n' +
+          '  <o:p></o:p></p>\n' +
+          '<p class=MsoNormal><span style=\'mso-spacerun:yes\'>&nbsp;</span><o:p></o:p></p>\n' +
+          '</body></html>',
+
+        mathml:
+          '<p>Quadratic roots, pasted from LibreOffice Writer:</p>\n' +
+          '<p><math xmlns="http://www.w3.org/1998/Math/MathML">\n' +
+          '  <mfrac>\n' +
+          '    <mrow>\n' +
+          '      <mo>-</mo><mi>b</mi><mo>&#177;</mo>\n' +
+          '      <msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt>\n' +
+          '    </mrow>\n' +
+          '    <mrow><mn>2</mn><mi>a</mi></mrow>\n' +
+          '  </mfrac>\n' +
+          '</math></p>',
+
+        docs:
+          '<meta charset="utf-8">\n' +
+          '<b style="font-weight:normal" id="docs-internal-guid-1a2b3c">\n' +
+          '<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:0pt;text-align:center">\n' +
+          '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0);\n' +
+          '    background-color:transparent;vertical-align:baseline;white-space:pre-wrap">\n' +
+          '    Pasted from Google Docs. On a dark theme this arrives as black text\n' +
+          '    on a black background, because Docs writes the colour inline.\n' +
+          '  </span></p></b>',
+      };
+
       const renderMath = (root) => {
         root.querySelectorAll('[data-latex]').forEach((el) => {
-          const display = el.dataset.type === 'block-math';
+          const displayMode = el.dataset.type === 'block-math';
           try {
-            katex.render(el.dataset.latex, el, { displayMode: display, throwOnError: false });
+            katex.render(el.dataset.latex, el, { displayMode, throwOnError: false });
           } catch {
             el.textContent = el.dataset.latex;
           }
         });
       };
 
+      const row = (label, value, good) =>
+        `<span>${label} <b class="${good ? 'good' : ''}">${value}</b></span>`;
+
+      const run = () => {
+        const raw = input.value;
+
+        if (!raw.trim()) {
+          preview.innerHTML = '';
+          htmlOut.textContent = '';
+          stats.innerHTML = '<span>Load a sample above, or paste from Word below.</span>';
+          return;
+        }
+
+        const fromWord = isWordHtml(raw);
+        // LibreOffice pastes bare <math> with no mso- markers, so isWordHtml alone
+        // would skip a document whose equations are recoverable.
+        const clean = stripInlineColors(fromWord || hasWordMath(raw) ? cleanWordHtml(raw) : raw);
+
+        preview.innerHTML = clean;
+        renderMath(preview);
+        htmlOut.textContent = clean;
+
+        const equations = (clean.match(/data-latex=/g) || []).length;
+        const shrink = Math.max(0, Math.round((1 - clean.length / raw.length) * 100));
+
+        stats.innerHTML = [
+          row('Word clipboard:', fromWord ? 'yes' : 'no'),
+          row('Equations kept editable:', equations, equations > 0),
+          row('Size:', `${raw.length.toLocaleString()} → ${clean.length.toLocaleString()} chars`),
+          row('Smaller by:', `${shrink}%`, shrink > 0),
+          row('Dead file:// images removed:', (raw.match(/file:\/\//g) || []).length),
+        ].join('');
+      };
+
+      const load = (key, button) => {
+        input.value = SAMPLES[key];
+        document
+          .querySelectorAll('.chip')
+          .forEach((c) => c.setAttribute('aria-pressed', String(c === button)));
+        run();
+      };
+
+      document.querySelectorAll('.chip').forEach((button) => {
+        button.addEventListener('click', () => load(button.dataset.sample, button));
+      });
+
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((t) => {
+            const on = t === tab;
+            t.setAttribute('aria-selected', String(on));
+            $(t.dataset.tab).classList.toggle('hidden', !on);
+          });
+        });
+      });
+
+      input.addEventListener('input', () => {
+        document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+        run();
+      });
+
       drop.addEventListener('paste', (event) => {
         const html = event.clipboardData?.getData('text/html');
         if (!html) return;
 
         event.preventDefault();
-
-        const clean = stripInlineColors(isWordHtml(html) ? cleanWordHtml(html) : html);
-
-        drop.innerHTML = html;
-        out.innerHTML = clean;
-        renderMath(out);
-
-        before.textContent = html;
-        after.textContent = clean;
-
-        const equations = (clean.match(/data-latex=/g) || []).length;
-        const saved = Math.max(0, Math.round((1 - clean.length / html.length) * 100));
-
-        stats.innerHTML =
-          `From Word: <b>${isWordHtml(html) ? 'yes' : 'no'}</b> · ` +
-          `${html.length.toLocaleString()} → <b>${clean.length.toLocaleString()}</b> characters ` +
-          `(<b>${saved}% smaller</b>) · equations kept editable: <b>${equations}</b>`;
+        drop.textContent = `Captured ${html.length.toLocaleString()} characters — see the input above.`;
+        input.value = html;
+        document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+        run();
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
+
+      // Start on the sample that shows the whole point.
+      load('equation', document.querySelector('[data-sample="equation"]'));
     </script>
   </body>
 </html>

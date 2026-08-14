@@ -32,8 +32,21 @@ describe('hasWordMath', () => {
     );
   });
 
+  it('is true for bare MathML, which carries no mso- markers at all', () => {
+    // LibreOffice pastes this. `isWordHtml` cannot see it, so gating only on
+    // that would skip a document whose equations are recoverable.
+    expect(isWordHtml('<math><mi>x</mi></math>')).toBe(false);
+    expect(hasWordMath('<math><mi>x</mi></math>')).toBe(true);
+    expect(hasWordMath('<math xmlns="http://www.w3.org/1998/Math/MathML"/>')).toBe(true);
+  });
+
   it('is false for a Word paste with no equations', () => {
     expect(hasWordMath('<p class="MsoNormal">plain text</p>')).toBe(false);
+  });
+
+  it('does not match words that merely start with "math"', () => {
+    expect(hasWordMath('<p>mathematics is hard</p>')).toBe(false);
+    expect(hasWordMath('<div class="mathjax">x</div>')).toBe(false);
   });
 });
 

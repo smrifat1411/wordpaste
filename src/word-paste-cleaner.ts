@@ -47,12 +47,16 @@ export function isWordHtml(html: string): boolean {
 
 /**
  * True when the pasted HTML carries recoverable equation math — OMML
- * (`<m:oMath>`) or Word's msEquation MathML fallback. The paste handler uses
- * this to skip the rasterized image Word ALSO puts on the clipboard, so the
- * editable equation (converted from the HTML) wins instead of a flat picture.
+ * (`<m:oMath>`), Word's msEquation MathML fallback, or bare MathML.
+ *
+ * Two jobs. A paste handler uses it to skip the rasterized image Word ALSO puts
+ * on the clipboard, so the editable equation wins instead of a flat picture.
+ * And it catches the case `isWordHtml` cannot: LibreOffice pastes bare `<math>`
+ * with no `mso-` markers at all, so gating only on `isWordHtml` would skip a
+ * document whose equations `cleanWordHtml` can recover.
  */
 export function hasWordMath(html: string): boolean {
-  return /<m:oMath|\[if gte msEquation/i.test(html);
+  return /<m:oMath|\[if gte msEquation|<math[\s>]/i.test(html);
 }
 
 // ── MathML → LaTeX ────────────────────────────────────────────────────────

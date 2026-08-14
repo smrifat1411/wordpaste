@@ -44,13 +44,17 @@ npm install wordpaste
 ## Usage
 
 ```js
-import { isWordHtml, cleanWordHtml } from 'wordpaste';
+import { isWordHtml, hasWordMath, cleanWordHtml } from 'wordpaste';
 
-const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
+const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;
 ```
 
-That is the whole idea. HTML string in, HTML string out. Wire it wherever your
-editor lets you see pasted HTML before it is parsed.
+HTML string in, HTML string out. Wire it wherever your editor lets you see
+pasted HTML before it is parsed.
+
+`hasWordMath` is in the guard because LibreOffice pastes bare `<math>` with no
+`mso-` markers at all — `isWordHtml` cannot see it, so gating on that alone
+would skip a document whose equations are recoverable.
 
 ## Integrations
 
@@ -68,7 +72,9 @@ export const WordPaste = Extension.create({
   transformPastedHTML(html) {
     // Word gets the full clean; everything else at least loses its colour,
     // so a Google Docs paste cannot smuggle black text into a dark theme.
-    return stripInlineColors(isWordHtml(html) ? cleanWordHtml(html) : html);
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
   },
 });
 ```
@@ -97,7 +103,7 @@ configExtension(ClipboardImportExtension, {
   $importMimeType: {
     'text/html': [
       (html, selection, _$next, dataTransfer) => {
-        const clean = isWordHtml(html) ? cleanWordHtml(html) : html;
+        const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;
         const dom = new DOMParser().parseFromString(clean, 'text/html');
         const nodes = $generateNodesFromDOMViaExtension(dom, {
           context: [
@@ -120,7 +126,7 @@ No editor library needed — the native paste event carries the HTML:
 ```js
 element.addEventListener('paste', (event) => {
   const html = event.clipboardData?.getData('text/html');
-  if (!html || !isWordHtml(html)) return;
+  if (!html || !(isWordHtml(html) || hasWordMath(html))) return;
 
   event.preventDefault();
   document.execCommand('insertHTML', false, cleanWordHtml(html));
@@ -171,8 +177,10 @@ ordinary pastes stay untouched.
 
 ### `hasWordMath(html): boolean`
 
-True when the paste carries recoverable equations. Use it to skip Word's
-screenshot in a file-paste handler, as shown in [Tiptap](#tiptap).
+True when the paste carries recoverable equations — OMML, Word's msEquation
+fallback, or bare MathML. Two uses: skip Word's screenshot in a file-paste
+handler (see [Tiptap](#tiptap)), and catch LibreOffice pastes that `isWordHtml`
+cannot see.
 
 ### `stripInlineColors(html): string`
 
