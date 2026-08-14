@@ -218,7 +218,7 @@ full-width centred bands. Switch a specific one to display in your editor.
 radicals and n-th roots, delimiters, n-ary operators (∑ ∫ ∏), named functions,
 upper and lower limits, overline, accent, matrices — plus the unicode maths
 glyphs Word emits as plain text (× ÷ ≥ ≤ ≠ ± ∞ ⇒ π θ …), which KaTeX cannot read
-raw. Scored 103/103 on a real exam paper of about 100 equations.
+raw.
 
 ## Limits
 

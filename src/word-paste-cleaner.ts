@@ -55,7 +55,7 @@ export function hasWordMath(html: string): boolean {
   return /<m:oMath|\[if gte msEquation/i.test(html);
 }
 
-// ── MathML → LaTeX (covers ~80% of exam math) ─────────────────────────────
+// ── MathML → LaTeX ────────────────────────────────────────────────────────
 
 function childLatex(el: Element): string {
   return Array.from(el.childNodes).map(convertMathmlNode).join('');

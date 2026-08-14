@@ -3,7 +3,7 @@
  *
  * Word stores equations as OMML — both on the clipboard and inside a .docx
  * (`word/document.xml`). This walks the OMML tree and emits LaTeX that KaTeX or
- * MathJax renders. Scored 103/103 on a real exam paper of ~100 equations.
+ * MathJax renders.
  *
  * Browser-only (uses the native DOMParser).
  */
