@@ -6,6 +6,8 @@ import {
   hasWordMath,
   stripInlineColors,
   transformPastedHTML,
+  isGoogleDocsHtml,
+  cleanGoogleDocsHtml,
 } from '../src/word-paste-cleaner.js';
 
 // LaTeX appears twice: in `data-latex`, and as text so it degrades readably.
@@ -230,5 +232,57 @@ describe('does not sanitise', () => {
   it('drops a leading script only because parsing puts it in <head>', () => {
     // Not protection — do not rely on it. Anything after body content survives.
     expect(transformPastedHTML('<html xmlns:o="urn:schemas-microsoft-com:office:office"><script>alert(1)</script>')).toBe('');
+  });
+});
+
+describe('cleanGoogleDocsHtml', () => {
+  const docs = (inner: string) =>
+    `<b style="font-weight:normal" id="docs-internal-guid-9f2a">${inner}</b>`;
+
+  it('detects a Docs paste', () => {
+    expect(isGoogleDocsHtml(docs('<p>x</p>'))).toBe(true);
+    expect(isGoogleDocsHtml('<p>ordinary</p>')).toBe(false);
+  });
+
+  it('unwraps the fake bold wrapper instead of leaving a bare <b>', () => {
+    const out = cleanGoogleDocsHtml(docs('<p>plain text</p>'));
+
+    expect(out).toBe('<p>plain text</p>');
+    expect(out).not.toContain('<b');
+  });
+
+  it('turns inline formatting into real tags before styles are dropped', () => {
+    const out = cleanGoogleDocsHtml(
+      docs(
+        '<span style="font-weight:700">bold</span>' +
+          '<span style="font-style:italic">italic</span>' +
+          '<span style="text-decoration:underline">under</span>' +
+          '<span style="text-decoration:line-through">struck</span>',
+      ),
+    );
+
+    expect(out).toContain('<strong>bold</strong>');
+    expect(out).toContain('<em>italic</em>');
+    expect(out).toContain('<u>under</u>');
+    expect(out).toContain('<s>struck</s>');
+  });
+
+  it('drops the fonts and the guid but keeps alignment', () => {
+    const out = cleanGoogleDocsHtml(
+      docs('<p style="text-align:center;line-height:1.38"><span style="font-size:11pt;font-family:Arial">x</span></p>'),
+    );
+
+    expect(out).toContain('text-align:center');
+    expect(out).not.toMatch(/font-size|font-family|line-height/);
+    expect(out).not.toContain('docs-internal-guid');
+  });
+
+  it('routes through transformPastedHTML', () => {
+    const out = transformPastedHTML(
+      docs('<span style="font-weight:700;color:#000000;font-family:Arial">x</span>'),
+    );
+
+    expect(out).toContain('<strong>x</strong>');
+    expect(out).not.toMatch(/color|font-family|<b[\s>]/);
   });
 });

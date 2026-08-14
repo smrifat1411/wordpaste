@@ -4,6 +4,24 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.7.0
+
+### Added
+
+- Google Docs now gets a real clean instead of only a colour fix.
+  `isGoogleDocsHtml` and `cleanGoogleDocsHtml` are exported, and
+  `transformPastedHTML` routes to them automatically.
+
+  Docs wraps every paste in `<b style="font-weight:normal">`. Strip that style
+  and the whole paste turns bold — the most common Docs paste bug there is. It
+  is unwrapped before anything else touches it.
+
+  Docs also carries bold and italic as inline styles rather than tags, so a
+  blind style strip would have destroyed the formatting. Those become real
+  `<strong>`, `<em>`, `<u>` and `<s>` first.
+
+  A Docs paste now comes out around 64% smaller, against 12% before.
+
 ## 0.6.1
 
 ### Documentation

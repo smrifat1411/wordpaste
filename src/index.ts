@@ -3,6 +3,8 @@ export {
   cleanWordHtml,
   isWordHtml,
   hasWordMath,
+  isGoogleDocsHtml,
+  cleanGoogleDocsHtml,
   stripInlineColors,
   type CleanWordHtmlOptions,
   type RenderMath,

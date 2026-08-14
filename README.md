@@ -74,7 +74,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.6.1';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.7.0';
 </script>
 ```
 
@@ -141,7 +141,7 @@ cleanWordHtml(html, {
 | **LibreOffice Writer** | Yes | **Yes** — MathML |
 | **Outlook** | Yes | n/a |
 | **Excel** | Yes | n/a |
-| **Google Docs** | Colour only | No |
+| **Google Docs** | Yes | No |
 | Anything else | Colour only | — |
 
 **Formatting:** bold, italic, underline, super/subscript, links, lists, tables
@@ -154,9 +154,12 @@ rule for. In Tiptap that means adding
 [`@tiptap/extension-text-align`](https://tiptap.dev/docs/editor/extensions/functionality/textalign).
 Without it the alignment is discarded by the editor, not by wordpaste.
 
-**Google Docs** writes no `mso-` markers, so the detector correctly says "not
-Word" and leaves its HTML alone. Only the colour fix runs — which is the part
-that matters, since Docs writes `color: rgb(0,0,0)` inline.
+**Google Docs** gets its own cleaner. Docs wraps every paste in
+`<b style="font-weight:normal">` — strip that style and the whole paste turns
+bold, which is the most common Docs paste bug there is. It also carries bold and
+italic as inline styles rather than tags, so those become real `<strong>` and
+`<em>` before the font noise is dropped. And it writes `color: rgb(0,0,0)`
+inline, which is unreadable on a dark theme.
 
 Its equations cannot be recovered by anyone: Docs puts them on the clipboard as
 images already. Word is the unusual one — it sends the picture *and* the real
@@ -382,6 +385,15 @@ True for Word and Office clipboard HTML. A cheap string check.
 
 True when the paste carries recoverable equations — OMML, Word's msEquation
 fallback, or bare MathML.
+
+### `isGoogleDocsHtml(html): boolean`
+
+True for a Google Docs paste, matched on its `docs-internal-guid` marker.
+
+### `cleanGoogleDocsHtml(html): string`
+
+The Docs cleaner. Unwraps the fake bold wrapper, converts inline bold, italic,
+underline and strikethrough into real tags, then drops the fonts and sizes.
 
 ### `stripInlineColors(html): string`
 

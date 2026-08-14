@@ -333,7 +333,7 @@ new Editor({
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste@0.6.1';
+      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste@0.7.0';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.
@@ -377,9 +377,11 @@ new Editor({
           '<meta charset="utf-8">\n' +
           '<b style="font-weight:normal" id="docs-internal-guid-1a2b3c">\n' +
           '<p dir="ltr" style="line-height:1.38;text-align:center">\n' +
-          '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0);\n' +
-          '    background-color:transparent">Pasted from Google Docs. On a dark theme this\n' +
-          '    arrives as black text on a black background.</span></p></b>',
+          '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0);font-weight:700;\n' +
+          '    white-space:pre-wrap">Question 4</span></p>\n' +
+          '<p dir="ltr"><span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0)">State the </span>\n' +
+          '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0);font-style:italic">continuity equation</span>\n' +
+          '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0)"> and define each term.</span></p></b>',
       };
 
       const CAPTIONS = {
@@ -390,7 +392,7 @@ new Editor({
         mathml:
           'LibreOffice sends <b>MathML</b>. Your editor has no rule for the <b>&lt;math&gt;</b> tag, so it drops it and keeps only the characters — the formula on the left is destroyed.',
         docs:
-          'Shown on a <b>dark theme</b>, because that is where this bites. Google Docs writes <b>color: rgb(0,0,0)</b> inline, so on the left the text is black on black.',
+          'Google Docs wraps every paste in a fake <b>&lt;b&gt;</b> tag and stores bold and italic as inline styles. Shown on a <b>dark theme</b>, because Docs also writes <b>color: rgb(0,0,0)</b> inline — on the left the text is black on black.',
       };
 
       // A schema with no rule for a tag drops the element but keeps its text.

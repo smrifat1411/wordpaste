@@ -149,6 +149,68 @@ function mathmlStringToLatex(mathml: string): string {
   }
 }
 
+// ── Shared cleanup ─────────────────────────────────────────────────────────
+
+/** Drop every inline style except text-align, which is the author's layout. */
+function keepOnlyTextAlign(doc: Document): void {
+  doc.querySelectorAll('[style]').forEach((el) => {
+    const kept = (el.getAttribute('style') ?? '')
+      .split(';')
+      .filter((decl) => /^\s*text-align\s*:/i.test(decl))
+      .join('; ')
+      .trim();
+
+    if (kept) el.setAttribute('style', kept);
+    else el.removeAttribute('style');
+  });
+}
+
+// ── Google Docs ────────────────────────────────────────────────────────────
+
+export function isGoogleDocsHtml(html: string): boolean {
+  return html.includes('docs-internal-guid');
+}
+
+// Docs carries bold and italic as inline styles, not tags. These have to become
+// real elements before the styles are stripped, or the formatting is lost.
+const STYLE_AS_TAG: Array<[RegExp, string]> = [
+  [/font-weight\s*:\s*(bold(er)?|[6-9]00)/i, 'strong'],
+  [/font-style\s*:\s*italic/i, 'em'],
+  [/text-decoration[\w-]*\s*:[^;]*underline/i, 'u'],
+  [/text-decoration[\w-]*\s*:[^;]*line-through/i, 's'],
+];
+
+/**
+ * Clean a Google Docs paste: unwrap its fake bold wrapper, turn its inline
+ * formatting into real tags, then drop the font noise.
+ */
+export function cleanGoogleDocsHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // Docs wraps the whole paste in <b style="font-weight:normal">. Unwrap it
+  // FIRST — strip the style and a bare <b> makes everything bold.
+  doc
+    .querySelectorAll('b[id^="docs-internal-guid"], b[style*="font-weight:normal"]')
+    .forEach((el) => el.replaceWith(...Array.from(el.childNodes)));
+
+  doc.querySelectorAll('[style]').forEach((el) => {
+    const style = el.getAttribute('style') ?? '';
+    for (const [pattern, tag] of STYLE_AS_TAG) {
+      if (!pattern.test(style)) continue;
+      const wrapper = doc.createElement(tag);
+      while (el.firstChild) wrapper.appendChild(el.firstChild);
+      el.appendChild(wrapper);
+    }
+  });
+
+  keepOnlyTextAlign(doc);
+  doc
+    .querySelectorAll('[id^="docs-internal-guid"]')
+    .forEach((el) => el.removeAttribute('id'));
+
+  return doc.body.innerHTML;
+}
+
 // ── Main cleaner ───────────────────────────────────────────────────────────
 
 export function cleanWordHtml(
@@ -197,17 +259,7 @@ export function cleanWordHtml(
     .filter((el) => el.tagName.includes(':'))
     .forEach((el) => el.remove());
 
-  // Keep text-align: that is the author's layout, not Word decoration.
-  doc.querySelectorAll('[style]').forEach((el) => {
-    const kept = (el.getAttribute('style') ?? '')
-      .split(';')
-      .filter((decl) => /^\s*text-align\s*:/i.test(decl))
-      .join('; ')
-      .trim();
-
-    if (kept) el.setAttribute('style', kept);
-    else el.removeAttribute('style');
-  });
+  keepOnlyTextAlign(doc);
 
   // Strip mso-* class attributes
   doc.querySelectorAll('[class]').forEach((el) => {
@@ -272,7 +324,9 @@ export function stripInlineColors(html: string): string {
  * compose `cleanWordHtml` yourself if you need `renderMath`.
  */
 export function transformPastedHTML(html: string): string {
-  return stripInlineColors(
-    isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-  );
+  if (isWordHtml(html) || hasWordMath(html)) {
+    return stripInlineColors(cleanWordHtml(html));
+  }
+  if (isGoogleDocsHtml(html)) return stripInlineColors(cleanGoogleDocsHtml(html));
+  return stripInlineColors(html);
 }
