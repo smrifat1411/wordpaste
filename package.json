@@ -1,6 +1,6 @@
 {
   "name": "wordpaste",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Clean Microsoft Word clipboard HTML on paste and keep the equations editable. Converts Word OMML and MathML to LaTeX. Zero dependencies, works with Tiptap, Lexical, ProseMirror or plain contenteditable.",
   "keywords": [
     "word",
@@ -55,7 +55,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "prepublishOnly": "npm run build && npm test"
+    "audit:docs": "node scripts/audit-docs.mjs",
+    "prepublishOnly": "npm run build && npm test && npm run audit:docs"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

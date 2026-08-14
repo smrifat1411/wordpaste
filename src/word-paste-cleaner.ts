@@ -264,3 +264,27 @@ export function stripInlineColors(html: string): string {
 
   return doc.body.innerHTML;
 }
+
+/**
+ * Ready-made paste handler: clean Word and LibreOffice HTML, and drop pasted
+ * colour from everything else so a Google Docs paste cannot smuggle black text
+ * into a dark theme.
+ *
+ * Named to match ProseMirror's editor prop, so it can be passed straight
+ * through — Tiptap exposes the same prop via `editorProps`:
+ *
+ * ```js
+ * new Editor({ editorProps: { transformPastedHTML } })   // Tiptap
+ * new EditorView(el, { transformPastedHTML })            // ProseMirror
+ * transformPastedHTML(html)                              // anywhere else
+ * ```
+ *
+ * Takes no options on purpose: ProseMirror calls it as `(html, view)`, so extra
+ * parameters would break passing it by reference. Compose `cleanWordHtml` and
+ * the guards yourself if you need `renderMath` or a different rule.
+ */
+export function transformPastedHTML(html: string): string {
+  return stripInlineColors(
+    isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+  );
+}

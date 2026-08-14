@@ -61,9 +61,7 @@
       import { registerRichText, HeadingNode, QuoteNode } from 'https://esm.sh/@lexical/rich-text@0.49';
       import { $generateNodesFromDOM } from 'https://esm.sh/@lexical/html@0.49';
       import { registerHistory, createEmptyHistoryState } from 'https://esm.sh/@lexical/history@0.49';
-      import {
-        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
-      } from 'https://esm.sh/wordpaste';
+      import { transformPastedHTML, isWordHtml, hasWordMath } from 'https://esm.sh/wordpaste';
 
       const editor = createEditor({
         namespace: 'wordpaste-example',
@@ -82,7 +80,7 @@
           if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
 
           event.preventDefault();
-          const clean = stripInlineColors(cleanWordHtml(html));
+          const clean = transformPastedHTML(html);
           const dom = new DOMParser().parseFromString(clean, 'text/html');
 
           editor.update(() => {
@@ -96,7 +94,7 @@
 
       document.getElementById('code').textContent = `import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
 import { $generateNodesFromDOM } from '@lexical/html';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+import { transformPastedHTML, isWordHtml, hasWordMath } from 'wordpaste';
 
 editor.registerCommand(
   PASTE_COMMAND,
@@ -105,8 +103,7 @@ editor.registerCommand(
     if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
 
     event.preventDefault();
-    const clean = stripInlineColors(cleanWordHtml(html));
-    const dom = new DOMParser().parseFromString(clean, 'text/html');
+    const dom = new DOMParser().parseFromString(transformPastedHTML(html), 'text/html');
 
     editor.update(() => {
       $getRoot().selectEnd();

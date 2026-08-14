@@ -2,119 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste + plain JavaScript</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
-      crossorigin="anonymous"
-    />
+    <title>Moved — wordpaste + vanilla JavaScript</title>
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/examples/vanilla.html" />
+    <meta http-equiv="refresh" content="0; url=./vanilla.html" />
     <style>
-      :root { color-scheme: light dark; }
       body {
-        max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+        max-width: 40rem; margin: 4rem auto; padding: 0 1.25rem;
         font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, sans-serif;
       }
-      h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
-      p.sub { margin: 0 0 1.25rem; color: #71717a; }
       a { color: #059669; }
-      #editor {
-        min-height: 180px; padding: 1rem; border: 1px solid #d4d4d8;
-        border-radius: 10px; outline: none;
-      }
-      #editor:focus { border-color: #059669; }
-      button {
-        font: inherit; font-size: .88rem; padding: .35rem .8rem; margin: .9rem .4rem 0 0;
-        border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
-        color: inherit; cursor: pointer;
-      }
-      pre {
-        margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
-        background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
-        font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
-      }
-      @media (prefers-color-scheme: dark) {
-        #editor, button { border-color: #3f3f46; }
-        pre { background: #18181b; border-color: #27272a; }
-        p.sub { color: #a1a1aa; }
-      }
     </style>
   </head>
   <body>
-    <h1>wordpaste + plain JavaScript</h1>
-    <p class="sub">
-      No editor library. Copy from Word and paste below, or press the button to
-      load a sample. <a href="../">Back to the playground</a>
+    <p>
+      This example moved to <a href="./vanilla.html">vanilla.html</a>. Redirecting…
     </p>
-
-    <div id="editor" contenteditable="true">Paste from Word here…</div>
-    <button id="sample">Load a Word sample</button>
-
-    <pre id="code"></pre>
-
-    <script type="module">
-      import {
-        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
-      } from 'https://esm.sh/wordpaste';
-
-      const editor = document.getElementById('editor');
-
-      const clean = (html) =>
-        stripInlineColors(isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html);
-
-      editor.addEventListener('paste', (event) => {
-        const html = event.clipboardData.getData('text/html');
-        if (!html) return;
-
-        event.preventDefault();
-        document.execCommand('insertHTML', false, clean(html));
-        renderMath();
-      });
-
-      // Nothing renders LaTeX on its own — this is the KaTeX pass.
-      function renderMath() {
-        editor.querySelectorAll('[data-latex]').forEach((el) => {
-          katex.render(el.dataset.latex, el, {
-            displayMode: el.dataset.type === 'block-math',
-            throwOnError: false,
-          });
-        });
-      }
-
-      const SAMPLE =
-        '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">' +
-        '<p class=MsoNormal style="text-align:center;mso-bidi-font-size:11.0pt;font-family:Calibri">' +
-        'Darcy&#8211;Weisbach head loss<o:p></o:p></p>' +
-        '<p class=MsoNormal><m:oMath><m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
-        '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r><m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup>' +
-        '</m:sSup></m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath>' +
-        '<img src="file:///C:/Users/me/clip_image001.png"><o:p></o:p></p></html>';
-
-      document.getElementById('sample').addEventListener('click', () => {
-        editor.innerHTML = clean(SAMPLE);
-        renderMath();
-      });
-
-      document.getElementById('code').textContent = `import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
-
-editor.addEventListener('paste', (event) => {
-  const html = event.clipboardData.getData('text/html');
-  if (!html) return;
-
-  event.preventDefault();
-
-  const clean = stripInlineColors(
-    isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-  );
-
-  document.execCommand('insertHTML', false, clean);
-});`;
-    </script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-      integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
-      crossorigin="anonymous"
-    ></script>
   </body>
 </html>

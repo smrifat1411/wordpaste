@@ -61,9 +61,7 @@
       import { EditorView } from 'https://esm.sh/prosemirror-view@1';
       import { schema } from 'https://esm.sh/prosemirror-schema-basic@1';
       import { DOMParser as PMParser } from 'https://esm.sh/prosemirror-model@1';
-      import {
-        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
-      } from 'https://esm.sh/wordpaste';
+      import { transformPastedHTML, cleanWordHtml } from 'https://esm.sh/wordpaste';
 
       const start = document.createElement('div');
       start.innerHTML = '<p>Paste from Word here…</p>';
@@ -71,23 +69,15 @@
       new EditorView(document.getElementById('editor'), {
         state: EditorState.create({ doc: PMParser.fromSchema(schema).parse(start) }),
         // The whole integration is this one prop.
-        transformPastedHTML(html) {
-          return stripInlineColors(
-            isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-          );
-        },
+        transformPastedHTML,
       });
 
       document.getElementById('code').textContent = `import { EditorView } from 'prosemirror-view';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+import { transformPastedHTML } from 'wordpaste';
 
 new EditorView(element, {
   state,
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
+  transformPastedHTML,
 });`;
     </script>
   </body>

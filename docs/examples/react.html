@@ -42,7 +42,8 @@
   <body>
     <h1>wordpaste + React</h1>
     <p class="sub">
-      Real React, no build step. Copy from Word and paste below.
+      Real React, no build step. React is the framework; Tiptap is the editor —
+      wordpaste plugs into the editor, not the framework.
       <a href="../">Back to the playground</a>
     </p>
 
@@ -53,28 +54,13 @@
       import React from 'https://esm.sh/react@19';
       import { createRoot } from 'https://esm.sh/react-dom@19/client';
       import { useEditor, EditorContent } from 'https://esm.sh/@tiptap/react@3?deps=react@19,react-dom@19';
-      import { Extension } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import {
-        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
-      } from 'https://esm.sh/wordpaste';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
-      // Tiptap drops text-align unless a schema knows about it.
-      const ALIGN = TextAlign.configure({ types: ['heading', 'paragraph'] });
       const h = React.createElement;
-
-      // The whole integration — identical to any other framework.
-      const WordPaste = Extension.create({
-        name: 'wordPaste',
-        transformPastedHTML(html) {
-          return stripInlineColors(
-            isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-          );
-        },
-      });
 
       const SAMPLE =
         '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">' +
@@ -87,7 +73,13 @@
 
       function WordEditor() {
         const editor = useEditor({
-          extensions: [StarterKit, WordPaste, Mathematics, ALIGN],
+          extensions: [
+            StarterKit,
+            Mathematics,
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+          ],
+          // The entire integration.
+          editorProps: { transformPastedHTML },
           content: '<p>Paste from Word here…</p>',
         });
 
@@ -99,7 +91,7 @@
             'button',
             {
               id: 'sample',
-              onClick: () => editor?.commands.setContent(stripInlineColors(cleanWordHtml(SAMPLE))),
+              onClick: () => editor?.commands.setContent(transformPastedHTML(SAMPLE)),
             },
             'Load a Word sample',
           ),
@@ -111,28 +103,13 @@
       document.getElementById('code').textContent = `'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';
-import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import TextAlign from '@tiptap/extension-text-align';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
-
-const WordPaste = Extension.create({
-  name: 'wordPaste',
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
-});
+import { transformPastedHTML } from 'wordpaste';
 
 export function WordEditor() {
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      WordPaste,
-      // without this Tiptap drops Word's centred headings
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    ],
+    extensions: [StarterKit],
+    editorProps: { transformPastedHTML },
     content: '<p>Paste from Word here…</p>',
   });
 

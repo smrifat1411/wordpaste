@@ -14,7 +14,7 @@
 
 <p align="center">
   <b><a href="https://smrifat1411.github.io/wordpaste/">Try the live playground →</a></b><br>
-  <sub>Load a sample, or paste your own Word document. Runs in your browser.</sub>
+  <sub>Paste your own Word document into a real editor. Runs in your browser.</sub>
 </p>
 
 ---
@@ -23,16 +23,19 @@ Paste from Word into a web editor and two things go wrong. You get a wall of
 invisible Word styling, and every equation turns into a flat picture nobody can
 edit again.
 
-`wordpaste` fixes both. It is one function: HTML string in, clean HTML string
-out. No framework, no build step, no dependencies.
+**wordpaste** is a JavaScript and TypeScript package that fixes both. It is one
+function — HTML string in, clean HTML string out.
+
+```js
+import { transformPastedHTML } from 'wordpaste';
+
+new Editor({ editorProps: { transformPastedHTML } });
+```
 
 - **Equations survive** as editable LaTeX instead of screenshots
-- **2.4 kB gzipped**, zero dependencies
-- **Any editor** — plain `contenteditable`, Tiptap, ProseMirror, Lexical
-- **Works in the browser today**, and in Node with jsdom
-
-Every integration below has a **runnable single-file example** — no install, no
-build. Open it and paste from Word.
+- **2.4 kB gzipped**, zero dependencies, types included
+- **One line** to integrate — no plugin or extension to write
+- **Any editor**, any framework, or no framework at all
 
 ## Contents
 
@@ -40,7 +43,8 @@ build. Open it and paste from Word.
 - [Quick start](#quick-start)
 - [Showing the maths](#showing-the-maths) — **read this if equations look wrong**
 - [What it handles](#what-it-handles)
-- [Use it with](#use-it-with) — [Plain JavaScript](#plain-javascript) · [Tiptap](#tiptap) · [React](#react) · [Next.js](#nextjs) · [Vue](#vue) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Node](#node)
+- [Editors](#editors) — [Tiptap](#tiptap) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Vanilla JavaScript](#vanilla-javascript)
+- [Frameworks](#frameworks) — [React](#react) · [Next.js](#nextjs) · [Vue](#vue)
 - [API](#api)
 - [Equations](#equations)
 - [Limits](#limits)
@@ -55,17 +59,15 @@ npm install wordpaste
 ## Quick start
 
 ```js
-import { isWordHtml, hasWordMath, cleanWordHtml } from 'wordpaste';
-
-const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;
+import { transformPastedHTML } from 'wordpaste';
 ```
 
-`html` is the clipboard HTML — every editor gives you a place to see it before
-it is parsed. The sections below show exactly where, for each editor.
+`transformPastedHTML` is named after ProseMirror's editor prop, so in Tiptap and
+ProseMirror you pass it straight through. Anywhere else, call it with the
+clipboard HTML and use what it returns.
 
-Both checks are in the guard on purpose. `isWordHtml` catches Word and Office.
-`hasWordMath` also catches LibreOffice, which sends bare `<math>` with no Word
-markers at all.
+It cleans Word and LibreOffice pastes, and strips pasted colour from everything
+else so a Google Docs paste cannot smuggle black text into a dark theme.
 
 ## Showing the maths
 
@@ -75,19 +77,17 @@ An equation comes out like this:
 <span data-type="inline-math" data-latex="\frac{a}{b}">\frac{a}{b}</span>
 ```
 
-The LaTeX is in the attribute **and** in the text. That means if you do nothing,
-you see the raw `\frac{a}{b}` on screen. That is deliberate — a visible clue
-beats a blank space you cannot debug.
+The LaTeX is in the attribute **and** in the text. So if you do nothing, you see
+the raw `\frac{a}{b}` on screen. That is deliberate — a visible clue beats a
+blank space you cannot debug.
 
 To make it look like maths, pick one:
 
 **1. Tiptap** — install
-[`@tiptap/extension-mathematics`](https://tiptap.dev/docs/editor/extensions/nodes/mathematics)
-and add it to your extensions. The output above is already its markup, so it
-just works.
+[`@tiptap/extension-mathematics`](https://tiptap.dev/docs/editor/extensions/nodes/mathematics).
+The output above is already its markup, so it just works.
 
-**2. Any other editor** — render it yourself with
-[KaTeX](https://katex.org) or MathJax:
+**2. Any other editor** — render it with [KaTeX](https://katex.org) or MathJax:
 
 ```js
 document.querySelectorAll('[data-latex]').forEach((el) => {
@@ -98,9 +98,11 @@ document.querySelectorAll('[data-latex]').forEach((el) => {
 });
 ```
 
-**3. No renderer** — emit something else instead:
+**3. No renderer** — emit something else with the low-level API:
 
 ```js
+import { cleanWordHtml } from 'wordpaste';
+
 cleanWordHtml(html, {
   renderMath: (latex, block) => (block ? `$$${latex}$$` : `$${latex}$`),
 });
@@ -115,83 +117,58 @@ cleanWordHtml(html, {
 | **Outlook** | Yes | n/a |
 | **Excel** | Yes | n/a |
 | **Google Docs** | Colour only | No |
-| Anything else | Left untouched | — |
+| Anything else | Colour only | — |
 
-Google Docs writes no `mso-` markers, so the detector correctly says "not Word"
-and leaves its HTML alone. `stripInlineColors` still runs, which is the part
-that matters — Docs writes `color: rgb(0,0,0)` inline, so on a dark theme its
-text arrives black on black.
+**Formatting:** bold, italic, underline, super/subscript, links, lists, tables
+and `text-align` survive. Colour, highlight, font family and font size do not —
+that is the point, so Word's design does not leak into your app.
 
-**Formatting:** bold, italic, underline, super/subscript, links, real lists,
-tables and `text-align` survive. Colour, highlight, font family and font size do
-not — that is the point, so Word's design does not leak into your app.
+**Your editor has to want `text-align`.** wordpaste emits
+`style="text-align:center"`, but an editor drops any style its schema has no
+rule for. In Tiptap that means adding
+[`@tiptap/extension-text-align`](https://tiptap.dev/docs/editor/extensions/functionality/textalign).
+Without it the alignment is discarded by the editor, not by wordpaste.
+
+**Google Docs** writes no `mso-` markers, so the detector correctly says "not
+Word" and leaves its HTML alone. Only the colour fix runs — which is the part
+that matters, since Docs writes `color: rgb(0,0,0)` inline.
 
 Its equations cannot be recovered by anyone: Docs puts them on the clipboard as
 images already. Word is the unusual one — it sends the picture *and* the real
 maths, which is the gap this package exploits.
 
-## Use it with
+---
 
-### Plain JavaScript
+# Editors
 
-**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/plain.html)**
-
-No editor library. This is a complete, working example — save it as an HTML file
-and open it.
-
-```html
-<div id="editor" contenteditable="true">Paste here…</div>
-
-<script type="module">
-  import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors }
-    from 'https://esm.sh/wordpaste';
-
-  document.getElementById('editor').addEventListener('paste', (event) => {
-    const html = event.clipboardData.getData('text/html');
-    if (!html) return;
-
-    event.preventDefault();
-
-    const clean = stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-
-    document.execCommand('insertHTML', false, clean);
-  });
-</script>
-```
-
-`stripInlineColors` runs on every paste, not just Word ones, so a Google Docs
-paste cannot smuggle black text into a dark theme.
+**This is where wordpaste plugs in.** Pick the section for the editor you use.
 
 ### Tiptap
 
 **[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/tiptap.html)**
 
-`transformPastedHTML` is a documented method on a
-[custom extension](https://tiptap.dev/docs/editor/extensions/custom-extensions/create-new).
+`editorProps` is a documented Tiptap option, typed as ProseMirror's
+`EditorProps`. Pass the function and you are done.
 
 ```js
-import { Extension } from '@tiptap/core';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { transformPastedHTML } from 'wordpaste';
 
-export const WordPaste = Extension.create({
-  name: 'wordPaste',
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
+new Editor({
+  element,
+  extensions: [StarterKit],
+  editorProps: { transformPastedHTML },
 });
 ```
-
-Add `WordPaste` to your `extensions` array.
 
 If you also use `@tiptap/extension-file-handler`, tell it to ignore Word's
 screenshot when the HTML carries real maths — otherwise you get the equation
 *and* a picture of it:
 
 ```js
+import { hasWordMath } from 'wordpaste';
+
 FileHandler.configure({
   onPaste: (editor, files, pasteContent) => {
     if (pasteContent && hasWordMath(pasteContent)) return;
@@ -204,32 +181,26 @@ FileHandler.configure({
 
 **[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/prosemirror.html)**
 
-Tiptap is built on ProseMirror, but if you use it directly the hook is an editor
-prop. ProseMirror's own docs describe it as "for example to clean it up".
+The same prop, because Tiptap is built on ProseMirror. ProseMirror's own docs
+describe it as "for example to clean it up".
 
 ```js
 import { EditorView } from 'prosemirror-view';
-import { isWordHtml, hasWordMath, cleanWordHtml } from 'wordpaste';
+import { transformPastedHTML } from 'wordpaste';
 
-new EditorView(element, {
-  state,
-  transformPastedHTML(html) {
-    return isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;
-  },
-});
+new EditorView(element, { state, transformPastedHTML });
 ```
 
 ### Lexical
 
 **[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/lexical.html)**
 
-Claim the paste command, clean the HTML, then let Lexical parse it. This uses
-long-standing stable APIs, so it works across Lexical versions.
+Lexical has no equivalent prop, so claim the paste command instead:
 
 ```js
 import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
 import { $generateNodesFromDOM } from '@lexical/html';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+import { transformPastedHTML, isWordHtml, hasWordMath } from 'wordpaste';
 
 editor.registerCommand(
   PASTE_COMMAND,
@@ -238,8 +209,7 @@ editor.registerCommand(
     if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
 
     event.preventDefault();
-    const clean = stripInlineColors(cleanWordHtml(html));
-    const dom = new DOMParser().parseFromString(clean, 'text/html');
+    const dom = new DOMParser().parseFromString(transformPastedHTML(html), 'text/html');
 
     editor.update(() => {
       $getRoot().selectEnd();
@@ -252,38 +222,49 @@ editor.registerCommand(
 ```
 
 Lexical's default nodes have no maths node, so an equation lands as its LaTeX
-text. Rendering it is your node set's business — see
-[Showing the maths](#showing-the-maths).
+text — see [Showing the maths](#showing-the-maths).
+
+### Vanilla JavaScript
+
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/vanilla.html)**
+
+No editor library at all. The native paste event carries the HTML:
+
+```js
+import { transformPastedHTML } from 'wordpaste';
+
+element.addEventListener('paste', (event) => {
+  const html = event.clipboardData.getData('text/html');
+  if (!html) return;
+
+  event.preventDefault();
+  document.execCommand('insertHTML', false, transformPastedHTML(html));
+});
+```
+
+---
+
+# Frameworks
+
+**Your framework does not change the code.** wordpaste has no UI and no state —
+it is a function. Wire it into your *editor* using a section above; these pages
+only show where that code sits inside a component.
 
 ### React
 
 **[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/react.html)**
 
-No React build of wordpaste exists and none is needed — it is a function, not a
-component. The extension goes outside the component; only the editor hook goes
-inside.
-
 ```jsx
 'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';
-import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
-
-const WordPaste = Extension.create({
-  name: 'wordPaste',
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
-});
+import { transformPastedHTML } from 'wordpaste';
 
 export function WordEditor() {
   const editor = useEditor({
-    extensions: [StarterKit, WordPaste],
-    content: '<p>Paste from Word here…</p>',
+    extensions: [StarterKit],
+    editorProps: { transformPastedHTML },
   });
 
   return <EditorContent editor={editor} />;
@@ -292,20 +273,19 @@ export function WordEditor() {
 
 ### Next.js
 
-Same component as above, with one rule that matters:
+Same component, with one rule:
 
 > **Importing wordpaste on the server is safe. Calling it there is not.**
 
-Verified: importing the package in Node succeeds, but calling `cleanWordHtml`
-outside a browser throws `ReferenceError: DOMParser is not defined`.
+Verified: importing the package in Node succeeds, but calling it outside a
+browser throws `ReferenceError: DOMParser is not defined`.
 
-In practice that means the editor component needs `'use client'` — which it
-needs anyway, since paste is a browser event. You do **not** need
-`next/dynamic` or `ssr: false`; the import itself is harmless because the
-package touches no DOM at module scope.
+So the editor component needs `'use client'` — which it needs anyway, since
+paste is a browser event. You do **not** need `next/dynamic` or `ssr: false`;
+the import is harmless because the package touches no DOM at module scope.
 
-If you genuinely need to clean HTML on the server — a background job, an API
-route — supply a DOM first:
+To clean HTML on the server on purpose — a background job, an API route —
+supply a DOM first:
 
 ```js
 import { JSDOM } from 'jsdom';
@@ -319,22 +299,12 @@ globalThis.DOMParser = new JSDOM().window.DOMParser;
 ```vue
 <script setup>
 import { EditorContent, useEditor } from '@tiptap/vue-3';
-import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
-
-const WordPaste = Extension.create({
-  name: 'wordPaste',
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
-});
+import { transformPastedHTML } from 'wordpaste';
 
 const editor = useEditor({
-  extensions: [StarterKit, WordPaste],
-  content: '<p>Paste from Word here…</p>',
+  extensions: [StarterKit],
+  editorProps: { transformPastedHTML },
 });
 </script>
 
@@ -343,28 +313,25 @@ const editor = useEditor({
 </template>
 ```
 
-Svelte, Solid and Angular are the same shape — the wiring lives in the editor,
-not the framework.
+Svelte, Solid and Angular are the same — pick your editor above and put that
+code wherever your component lives.
 
-### Node
-
-The parser uses the browser's `DOMParser` and `querySelector`. In Node, supply
-one from [jsdom](https://github.com/jsdom/jsdom) before importing:
-
-```js
-import { JSDOM } from 'jsdom';
-globalThis.DOMParser = new JSDOM().window.DOMParser;
-
-const { cleanWordHtml } = await import('wordpaste');
-```
-
-`@xmldom/xmldom` will not work — it has no `querySelector`.
+---
 
 ## API
 
+### `transformPastedHTML(html): string`
+
+The one you want. Cleans Word and LibreOffice HTML, and drops pasted colour from
+everything else.
+
+Takes no options on purpose: ProseMirror calls it as `(html, view)`, so extra
+parameters would break passing it by reference. For more control, compose the
+pieces below yourself.
+
 ### `cleanWordHtml(html, options?): string`
 
-The main one. In order, it:
+The full cleaner, without the colour pass. In order, it:
 
 1. Unwraps Word's `<!--[if gte msEquation]-->` comments so the maths inside
    becomes live content.
@@ -372,31 +339,15 @@ The main one. In order, it:
 3. Converts standalone **MathML** (`<math>`) to LaTeX.
 4. Strips the leftover downlevel blocks, including the screenshot Word pairs
    with every equation.
-5. Removes namespaced elements (`<o:p>`, `<w:*>`, `<v:*>`), inline styles,
-   `mso-*` classes, `file://` images and empty paragraphs.
-
-**`text-align` is the one style kept** — it is layout the author chose, not
-Word decoration. Word writes `text-align:justify` on justified paragraphs, so a
-justified document arrives justified. Everything else goes: colour, highlight,
-font family and size.
-
-⚠️ **Your editor has to want it.** wordpaste emits `style="text-align:center"`,
-but an editor drops any style its schema has no rule for. In Tiptap that means
-adding [`@tiptap/extension-text-align`](https://tiptap.dev/docs/editor/extensions/functionality/textalign):
-
-```js
-TextAlign.configure({ types: ['heading', 'paragraph'] })
-```
-
-Without it the alignment is discarded by the editor, not by wordpaste.
+5. Removes namespaced elements (`<o:p>`, `<w:*>`, `<v:*>`), inline styles except
+   `text-align`, `mso-*` classes, `file://` images and empty paragraphs.
 
 `options.renderMath: (latex, block) => string` — see
 [Showing the maths](#showing-the-maths).
 
 ### `isWordHtml(html): boolean`
 
-True for Word and Office clipboard HTML. A cheap string check — run it first so
-ordinary pastes stay untouched.
+True for Word and Office clipboard HTML. A cheap string check.
 
 ### `hasWordMath(html): boolean`
 
@@ -405,23 +356,17 @@ fallback, or bare MathML.
 
 ### `stripInlineColors(html): string`
 
-Drops `color` and `background-color` only, keeping `text-align` and everything
-else. Safe to run on every paste.
+Drops `color` and `background-color` only, keeping everything else.
 
 ### `ommlToLatex(omml): string`
 
 Word's equation markup to a LaTeX string, on its own. Useful if you are reading
-a `.docx` yourself — [`mammoth`](https://github.com/mwilliamson/mammoth.js)
-has no equation support, so this fills that gap.
+a `.docx` yourself — [`mammoth`](https://github.com/mwilliamson/mammoth.js) has
+no equation support, so this fills that gap.
 
-### `mathNodeHtml(latex, block): string`
+### `mathNodeHtml(latex, block)` · `escapeLatexAttr` · `escapeLatexText`
 
-The default equation renderer. Exported so you can wrap it.
-
-### `escapeLatexAttr(latex)` · `escapeLatexText(latex)`
-
-HTML-escape a LaTeX string for an attribute or for element text. Different jobs:
-LaTeX contains `<` and `>`, which only need escaping in text position.
+The default equation renderer and its HTML escapers.
 
 ## Equations
 
@@ -431,7 +376,7 @@ lower limits, overline, accent, and matrices — plus the unicode maths glyphs
 Word emits as plain text (× ÷ ≥ ≤ ≠ ± ∞ ⇒ π θ …), which KaTeX cannot read raw.
 
 Equations land **inline** so they flow with the text instead of becoming
-full-width centred bands. Switch a specific one to display in your editor.
+full-width centred bands.
 
 ## Limits
 
@@ -439,11 +384,10 @@ full-width centred bands. Switch a specific one to display in your editor.
   `<p>` tags; this strips the styling but does not reconstruct `<ul>`/`<ol>`.
   [`tinymce-word-paste-filter`](https://www.npmjs.com/package/tinymce-word-paste-filter)
   does that part.
-- **Images that live on the writer's disk are dropped.** Word points at
-  `file:///C:/…`, which is a dead link on the web. `https:` and `data:` images
-  are kept. The real image bytes arrive separately as `clipboardData.files` —
-  uploading those is your app's job.
-- **Browser only**, unless you supply jsdom as shown above.
+- **Images on the writer's disk are dropped.** Word points at `file:///C:/…`,
+  a dead link on the web. `https:` and `data:` images are kept. The real bytes
+  arrive separately as `clipboardData.files` — uploading those is your app's job.
+- **Browser only**, unless you supply jsdom as shown under Next.js.
 - **Not a `.docx` reader.** This handles what Word puts on the clipboard.
 
 ## Why this exists

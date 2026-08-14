@@ -5,6 +5,7 @@ import {
   isWordHtml,
   hasWordMath,
   stripInlineColors,
+  transformPastedHTML,
 } from '../src/word-paste-cleaner.js';
 
 // LaTeX appears twice: in `data-latex`, and as text so it degrades readably.
@@ -171,5 +172,43 @@ describe('stripInlineColors', () => {
 
   it('returns HTML with no style attribute untouched', () => {
     expect(stripInlineColors('<p>x</p>')).toBe('<p>x</p>');
+  });
+});
+
+describe('transformPastedHTML', () => {
+  it('cleans a Word paste', () => {
+    expect(
+      transformPastedHTML(
+        '<p class="MsoNormal" style="mso-bidi-font-size:11pt">hi<o:p></o:p></p>',
+      ),
+    ).toBe('<p>hi</p>');
+  });
+
+  it('converts equations', () => {
+    expect(transformPastedHTML('<m:oMath><m:r>x</m:r></m:oMath>')).toBe(
+      inlineMath('x'),
+    );
+  });
+
+  it('catches bare MathML, which isWordHtml alone would miss', () => {
+    expect(
+      transformPastedHTML('<math><mfrac><mi>a</mi><mi>b</mi></mfrac></math>'),
+    ).toBe(inlineMath('\\frac{a}{b}'));
+  });
+
+  it('leaves ordinary HTML alone apart from colour', () => {
+    expect(
+      transformPastedHTML('<p style="color:red;text-align:center">hi</p>'),
+    ).toBe('<p style="text-align:center">hi</p>');
+    expect(transformPastedHTML('<p><b>hi</b></p>')).toBe('<p><b>hi</b></p>');
+  });
+
+  it('ignores the second argument ProseMirror passes it', () => {
+    const asProseMirrorCallsIt = transformPastedHTML as (
+      html: string,
+      view?: unknown,
+    ) => string;
+
+    expect(asProseMirrorCallsIt('<p>hi</p>', { some: 'view' })).toBe('<p>hi</p>');
   });
 });

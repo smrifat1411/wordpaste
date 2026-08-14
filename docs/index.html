@@ -122,6 +122,13 @@
       .doc.raw { font-family: Calibri, Carlito, "Segoe UI", sans-serif; }
       .doc[data-theme='dark'] { background: #0b0b0e; color: #e4e4e7; }
       .doc img { max-width: 100%; }
+      textarea.panel {
+        display: block; width: 100%; padding: 0.9rem; resize: vertical;
+        background: var(--bg); color: var(--fg); border: 0; outline: none;
+        font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+        tab-size: 2;
+      }
+      textarea.panel:focus { box-shadow: inset 0 0 0 2px var(--accent); }
       pre.panel {
         margin: 0; padding: 0.9rem; background: var(--bg);
         white-space: pre-wrap; word-break: break-word;
@@ -228,11 +235,12 @@
             </span>
             <div class="tabs" role="tablist">
               <button class="tab" data-panel="beforeDoc" role="tab" aria-selected="true">Result</button>
-              <button class="tab" data-panel="beforeSrc" role="tab" aria-selected="false">Clipboard HTML</button>
+              <button class="tab" data-panel="beforeSrc" role="tab" aria-selected="false">Edit HTML</button>
             </div>
           </div>
           <div id="beforeDoc" class="panel doc raw"></div>
-          <pre id="beforeSrc" class="panel" hidden></pre>
+          <textarea id="beforeSrc" class="panel" spellcheck="false" hidden
+            aria-label="Clipboard HTML — editable"></textarea>
         </section>
 
         <section class="pane after">
@@ -260,24 +268,24 @@
       <div class="stats" id="stats"></div>
 
       <p class="note">
-        <b>That right panel is a real Tiptap editor.</b> Click any equation to
-        change it, or copy something from Word and paste straight into it.
-        Everything runs in your browser — nothing is uploaded.
+        <b>Both panels are live.</b> The right one is a real Tiptap editor —
+        click any equation to change it, or paste straight from Word. The left
+        one's <b>Edit HTML</b> tab lets you change the clipboard HTML by hand and
+        watch the result update. Everything runs in your browser; nothing is
+        uploaded.
       </p>
 
       <section class="block">
         <h2>The code doing it</h2>
-        <p>This is the whole integration — the same extension the editor above is running.</p>
-        <pre class="code"><code>import { Extension } from '@tiptap/core';
-import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+        <p>That is the whole integration. The same one line works in raw ProseMirror, because they share the prop.</p>
+        <pre class="code"><code>import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { transformPastedHTML } from 'wordpaste';
 
-export const WordPaste = Extension.create({
-  name: 'wordPaste',
-  transformPastedHTML(html) {
-    return stripInlineColors(
-      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
-    );
-  },
+new Editor({
+  element,
+  extensions: [StarterKit],
+  editorProps: { transformPastedHTML },
 });</code></pre>
       </section>
 
@@ -290,7 +298,7 @@ export const WordPaste = Extension.create({
           <a class="btn" href="./examples/vue.html">Vue</a>
           <a class="btn" href="./examples/prosemirror.html">ProseMirror</a>
           <a class="btn" href="./examples/lexical.html">Lexical</a>
-          <a class="btn" href="./examples/plain.html">Plain JavaScript</a>
+          <a class="btn" href="./examples/vanilla.html">Vanilla JavaScript</a>
         </p>
       </section>
 
@@ -305,13 +313,11 @@ export const WordPaste = Extension.create({
     </main>
 
     <script type="module">
-      import { Editor, Extension } from 'https://esm.sh/@tiptap/core@3';
+      import { Editor } from 'https://esm.sh/@tiptap/core@3';
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import {
-        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
-      } from 'https://esm.sh/wordpaste';
+      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.
@@ -385,16 +391,13 @@ export const WordPaste = Extension.create({
         return doc.body.innerHTML;
       };
 
-      const clean = (html) =>
-        stripInlineColors(isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html);
-
       const stat = (k, v, tone) =>
         `<div class="stat"><span class="k">${k}</span><span class="v ${tone || ''}">${v}</span></div>`;
 
       const showComparison = (raw) => {
-        const out = clean(raw);
+        const out = transformPastedHTML(raw);
         beforeDoc.innerHTML = asEditorWouldKeep(raw);
-        beforeSrc.textContent = raw;
+        if (beforeSrc.value !== raw) beforeSrc.value = raw;
         afterSrc.textContent = out;
 
         const equations = (out.match(/data-latex=/g) || []).length;
@@ -410,21 +413,17 @@ export const WordPaste = Extension.create({
         return out;
       };
 
-      // The entire integration — the same extension shown in the code block above.
-      const WordPaste = Extension.create({
-        name: 'wordPaste',
-        transformPastedHTML(html) {
-          return showComparison(html);
-        },
-      });
-
       afterDoc.innerHTML = '';
       const editor = new Editor({
         element: afterDoc,
+        editorProps: {
+          // The integration is `transformPastedHTML` on its own; this page also
+          // fills the comparison panels, so it wraps it.
+          transformPastedHTML: (html) => showComparison(html),
+        },
         extensions: [
           StarterKit,
           ALIGN,
-          WordPaste,
           Mathematics.configure({
             inlineOptions: { onClick: (node, pos) => openMathBar(node, pos) },
             blockOptions: { onClick: (node, pos) => openMathBar(node, pos, true) },
@@ -478,6 +477,14 @@ export const WordPaste = Extension.create({
         setChrome(key);
         editor.commands.setContent(showComparison(SAMPLES[key]));
       };
+
+      // Editing the clipboard HTML re-runs everything, so the input is a
+      // scratchpad rather than a read-only dump.
+      beforeSrc.addEventListener('input', () => {
+        clearChips();
+        setChrome(null);
+        editor.commands.setContent(showComparison(beforeSrc.value));
+      });
 
       document.querySelectorAll('.chip').forEach((button) => {
         button.setAttribute('aria-pressed', 'false');
