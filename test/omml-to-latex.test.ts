@@ -167,6 +167,19 @@ describe('ommlToLatex constructs', () => {
     ).toBe('\\begin{matrix} a & b \\\\ c & d \\end{matrix}');
   });
 
+  it('m:nor — a run marked normal becomes upright text, not a variable', () => {
+    // Units and words inside equations: "2.5 m" must not render as 2.5 times m.
+    const omml = math(
+      `${run('2.5')}<m:r><m:rPr><m:nor/></m:rPr><m:t xml:space="preserve"> m</m:t></m:r>`,
+    );
+
+    expect(ommlToLatex(omml)).toBe('2.5\\text{ m}');
+  });
+
+  it('leaves an ordinary run as a variable', () => {
+    expect(ommlToLatex(math(run('x')))).toBe('x');
+  });
+
   it('maps unicode maths glyphs KaTeX cannot read raw', () => {
     expect(ommlToLatex(math(run('a×b≥c')))).toBe('a\\times b\\geq c');
   });

@@ -4,6 +4,18 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.6.0
+
+### Fixed
+
+- Units and words inside an equation now render upright instead of italic. Word
+  marks these runs with `<m:nor/>` — `2.5 m`, `and`, `m/s` — and without it the
+  metre in `y₁ = 2.5 m` came out as an italic variable. Those runs are now
+  wrapped in `\text{}`.
+
+  Found by running the converter over a real Word exam paper rather than
+  hand-written samples: 8 of its 98 equations were affected.
+
 ## 0.5.1
 
 ### Documentation

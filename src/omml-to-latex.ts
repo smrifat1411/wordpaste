@@ -102,15 +102,21 @@ function conv(node: Element): string {
       case 'lim':
         out += conv(el);
         break;
-      case 'r':
+      case 'r': {
         // Math run text. Three forms seen in the wild: the .docx wraps it in
         // <m:t>; Word's HTML clipboard stores it directly in the run OR wraps it
         // in HTML formatting (<i>/<b>/<span> — math variables come through
         // italicized). Reading the run's full textContent captures all three
         // (<m:rPr> run-properties carry no text). Verified on a real Mac Word
         // multi-equation clipboard paste.
-        out += escText(el.textContent ?? '');
+        const text = escText(el.textContent ?? '');
+        // <m:nor/> marks a run as upright text — units and words like "2.5 m"
+        // or "and". Without \text{} they render as italic variables.
+        const rPr = child(el, 'rPr');
+        const upright = rPr ? !!child(rPr, 'nor') : false;
+        out += upright && text.trim() ? `\\text{${text}}` : text;
         break;
+      }
       case 'f': {
         // fraction
         const nu = child(el, 'num'),
