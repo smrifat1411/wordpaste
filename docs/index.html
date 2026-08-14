@@ -14,7 +14,7 @@
     <meta property="og:title" content="wordpaste — paste from Word, keep your equations" />
     <meta
       property="og:description"
-      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.4 kB, zero dependencies, works with Tiptap, Lexical or plain contenteditable."
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.5 kB, zero dependencies, works with Tiptap, Lexical or plain contenteditable."
     />
     <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -24,7 +24,7 @@
     <meta name="twitter:title" content="wordpaste — paste from Word, keep your equations" />
     <meta
       name="twitter:description"
-      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.4 kB, zero dependencies."
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.5 kB, zero dependencies."
     />
     <link
       rel="stylesheet"
@@ -218,7 +218,7 @@
   </head>
   <body>
     <main>
-      <span class="eyebrow">MIT · zero dependencies · 2.4 kB</span>
+      <span class="eyebrow">MIT · zero dependencies · 2.5 kB</span>
       <h1>Paste from Word without the mess</h1>
       <p class="lede">
         Word's clipboard HTML is full of invisible styling, dead image links, and
@@ -333,7 +333,7 @@ new Editor({
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste@0.6.0';
+      import { transformPastedHTML, isWordHtml } from 'https://esm.sh/wordpaste@0.6.1';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.

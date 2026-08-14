@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.6.1
+
+### Documentation
+
+- The size badge on the npm page read "rate limited by upstream service" —
+  bundlephobia has been unreliable. Switched to bundlejs, which reports the size.
+- That badge says 2.5 kB while everything written said 2.4 kB. Both were true
+  under different measurements, but they disagreed in public. Now 2.5 kB
+  everywhere, matching what the badge shows.
+
 ## 0.6.0
 
 ### Fixed

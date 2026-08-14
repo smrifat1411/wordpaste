@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/smrifat1411/wordpaste/actions/workflows/ci.yml"><img src="https://github.com/smrifat1411/wordpaste/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.npmjs.com/package/wordpaste"><img src="https://img.shields.io/npm/v/wordpaste.svg" alt="npm version"></a>
-  <a href="https://bundlephobia.com/package/wordpaste"><img src="https://img.shields.io/bundlephobia/minzip/wordpaste.svg" alt="minzipped size"></a>
+  <a href="https://bundlejs.com/?q=wordpaste"><img src="https://img.shields.io/bundlejs/size/wordpaste" alt="minified and gzipped size"></a>
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="zero dependencies">
   <a href="./LICENSE"><img src="https://img.shields.io/npm/l/wordpaste.svg" alt="MIT license"></a>
 </p>
@@ -33,7 +33,7 @@ new Editor({ editorProps: { transformPastedHTML } });
 ```
 
 - **Equations survive** as editable LaTeX instead of screenshots
-- **2.4 kB gzipped**, zero dependencies, types included
+- **2.5 kB gzipped**, zero dependencies, types included
 - **One line** to integrate — no plugin or extension to write
 - **Any editor**, any framework, or no framework at all
 
@@ -74,7 +74,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.6.0';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.6.1';
 </script>
 ```
 
