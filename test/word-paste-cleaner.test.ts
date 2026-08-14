@@ -93,6 +93,29 @@ describe('cleanWordHtml', () => {
     ).toBe('<p>hi</p>');
   });
 
+  it('keeps text-align, which is layout the author chose', () => {
+    expect(
+      cleanWordHtml(
+        '<p class="MsoNormal" style="text-align:center;mso-pagination:widow-orphan">title</p>',
+      ),
+    ).toBe('<p style="text-align:center">title</p>');
+  });
+
+  it('drops colour, font and size even when they sit beside text-align', () => {
+    const out = cleanWordHtml(
+      '<p style="text-align:right;color:red;font-family:Calibri;font-size:20pt">x</p>',
+    );
+
+    expect(out).toContain('text-align:right');
+    expect(out).not.toMatch(/color|font-family|font-size/);
+  });
+
+  it('removes the attribute entirely when nothing survives', () => {
+    expect(cleanWordHtml('<p style="mso-pagination:widow-orphan">x</p>')).toBe(
+      '<p>x</p>',
+    );
+  });
+
   it('keeps a non-mso class', () => {
     expect(cleanWordHtml('<p class="intro">hi</p>')).toBe(
       '<p class="intro">hi</p>',

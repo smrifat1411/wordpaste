@@ -198,8 +198,18 @@ export function cleanWordHtml(
     .filter((el) => el.tagName.includes(':'))
     .forEach((el) => el.remove());
 
-  // Strip Word's inline styles
-  doc.querySelectorAll('[style]').forEach((el) => el.removeAttribute('style'));
+  // Strip Word's inline styles, but keep text-align — that is layout the author
+  // chose, not Word decoration.
+  doc.querySelectorAll('[style]').forEach((el) => {
+    const kept = (el.getAttribute('style') ?? '')
+      .split(';')
+      .filter((decl) => /^\s*text-align\s*:/i.test(decl))
+      .join('; ')
+      .trim();
+
+    if (kept) el.setAttribute('style', kept);
+    else el.removeAttribute('style');
+  });
 
   // Strip mso-* class attributes
   doc.querySelectorAll('[class]').forEach((el) => {

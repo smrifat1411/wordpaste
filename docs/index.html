@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste playground — paste from Word, keep your equations</title>
+    <title>wordpaste playground — paste from Word into a real editor</title>
     <meta
       name="description"
-      content="Live playground for wordpaste: clean Microsoft Word clipboard HTML and keep the equations editable. Converts Word OMML and MathML to LaTeX. Free, MIT, zero dependencies."
+      content="Live playground for wordpaste: paste from Microsoft Word into a real editor. Word's junk is stripped and the equations stay editable. Free, MIT, zero dependencies."
     />
     <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/" />
     <meta property="og:type" content="website" />
@@ -19,10 +19,6 @@
     <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="wordpaste — paste from Word without losing your equations. A broken screenshot placeholder next to a rendered Darcy-Weisbach equation."
-    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
     <meta name="twitter:title" content="wordpaste — paste from Word, keep your equations" />
@@ -39,477 +35,179 @@
     <style>
       :root {
         color-scheme: light dark;
-        --bg: #fff;
-        --fg: #18181b;
-        --muted: #71717a;
-        --faint: #a1a1aa;
-        --line: #e4e4e7;
-        --soft: #fafafa;
-        --raised: #f4f4f5;
-        --accent: #059669;
-        --accent-soft: #ecfdf5;
-        --bad: #dc2626;
-        --bad-soft: #fef2f2;
+        --bg: #fff; --fg: #18181b; --muted: #71717a; --faint: #a1a1aa;
+        --line: #e4e4e7; --soft: #fafafa; --raised: #f4f4f5;
+        --accent: #059669; --accent-soft: #ecfdf5; --bad: #dc2626;
         --radius: 12px;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #09090b;
-          --fg: #f4f4f5;
-          --muted: #a1a1aa;
-          --faint: #71717a;
-          --line: #27272a;
-          --soft: #111114;
-          --raised: #1a1a1f;
-          --accent: #34d399;
-          --accent-soft: #052e23;
-          --bad: #f87171;
-          --bad-soft: #2a1113;
+          --bg: #09090b; --fg: #f4f4f5; --muted: #a1a1aa; --faint: #71717a;
+          --line: #27272a; --soft: #111114; --raised: #1a1a1f;
+          --accent: #34d399; --accent-soft: #052e23; --bad: #f87171;
         }
       }
-      * {
-        box-sizing: border-box;
-      }
-      html {
-        -webkit-text-size-adjust: 100%;
-      }
+      * { box-sizing: border-box; }
       body {
-        margin: 0;
-        padding: 3rem 1.25rem 5rem;
-        background: var(--bg);
-        color: var(--fg);
-        font:
-          15px/1.65 ui-sans-serif,
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          sans-serif;
+        margin: 0; padding: 3rem 1.25rem 5rem;
+        background: var(--bg); color: var(--fg);
+        font: 15px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
         -webkit-font-smoothing: antialiased;
       }
-      main {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      a {
-        color: var(--accent);
-      }
+      main { max-width: 1200px; margin: 0 auto; }
+      a { color: var(--accent); }
 
-      .hero {
-        margin-bottom: 2.25rem;
-      }
       .eyebrow {
-        display: inline-block;
-        margin: 0 0 0.7rem;
-        padding: 0.2rem 0.6rem;
-        font-size: 0.74rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--accent);
-        background: var(--accent-soft);
-        border-radius: 999px;
+        display: inline-block; margin: 0 0 0.7rem; padding: 0.2rem 0.65rem;
+        font-size: 0.74rem; font-weight: 600; letter-spacing: 0.04em;
+        text-transform: uppercase; color: var(--accent);
+        background: var(--accent-soft); border-radius: 999px;
       }
       h1 {
-        margin: 0 0 0.5rem;
-        font-size: clamp(1.85rem, 4vw, 2.5rem);
-        letter-spacing: -0.03em;
-        line-height: 1.15;
+        margin: 0 0 0.5rem; font-size: clamp(1.85rem, 4vw, 2.5rem);
+        letter-spacing: -0.03em; line-height: 1.15;
       }
-      .lede {
-        margin: 0 0 1.1rem;
-        max-width: 62ch;
-        font-size: 1.05rem;
-        color: var(--muted);
-      }
-      .lede b {
-        color: var(--fg);
-        font-weight: 600;
-      }
-      .hero-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
+      .lede { margin: 0 0 1.1rem; max-width: 64ch; font-size: 1.05rem; color: var(--muted); }
+      .lede b { color: var(--fg); font-weight: 600; }
+      .hero-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2.25rem; }
       .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.42rem 0.9rem;
-        font-size: 0.88rem;
-        font-weight: 500;
-        text-decoration: none;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        color: var(--fg);
-        background: var(--bg);
+        display: inline-flex; align-items: center; padding: 0.42rem 0.9rem;
+        font-size: 0.88rem; font-weight: 500; text-decoration: none;
+        border-radius: 8px; border: 1px solid var(--line);
+        color: var(--fg); background: var(--bg);
       }
-      .btn:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-      .btn.primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-      }
-      .btn.primary:hover {
-        color: #fff;
-        opacity: 0.92;
-      }
-      .btn code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.92em;
-      }
+      .btn:hover { border-color: var(--accent); color: var(--accent); }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
 
-      .toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.45rem;
-        margin-bottom: 1rem;
-      }
-      .toolbar .label {
-        font-size: 0.8rem;
-        color: var(--muted);
-        margin-right: 0.3rem;
-        font-weight: 500;
-      }
+      .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-bottom: 0.9rem; }
+      .toolbar .label { font-size: 0.8rem; color: var(--muted); margin-right: 0.3rem; font-weight: 500; }
       button.chip {
-        font: inherit;
-        font-size: 0.85rem;
-        padding: 0.3rem 0.75rem;
-        background: var(--bg);
-        color: var(--muted);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        cursor: pointer;
-        transition:
-          color 0.12s,
-          border-color 0.12s,
-          background 0.12s;
+        font: inherit; font-size: 0.85rem; padding: 0.3rem 0.75rem;
+        background: var(--bg); color: var(--muted);
+        border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
       }
-      button.chip:hover {
-        color: var(--fg);
-        border-color: var(--faint);
-      }
-      button.chip[aria-pressed='true'] {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-      }
+      button.chip:hover { color: var(--fg); border-color: var(--faint); }
+      button.chip[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-      .grid {
-        display: grid;
-        gap: 1.1rem;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-      }
-      @media (max-width: 900px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-      }
-      .pane {
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        overflow: hidden;
-        background: var(--soft);
-      }
-      .pane.before {
-        border-color: color-mix(in srgb, var(--bad) 28%, var(--line));
-      }
-      .pane.after {
-        border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
-      }
+      #caption { margin: 0 0 1rem; font-size: 0.9rem; color: var(--muted); max-width: 80ch; }
+      #caption b { color: var(--fg); font-weight: 600; }
+
+      .grid { display: grid; gap: 1.1rem; grid-template-columns: 1fr 1fr; align-items: start; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+      .pane { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+      .pane.before { border-color: color-mix(in srgb, var(--bad) 28%, var(--line)); }
+      .pane.after { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
       .pane > .head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.6rem;
-        padding: 0.6rem 0.85rem;
-        background: var(--raised);
-        border-bottom: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+        padding: 0.6rem 0.85rem; background: var(--raised); border-bottom: 1px solid var(--line);
       }
-      .title {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        font-size: 0.82rem;
-        font-weight: 600;
-      }
-      .dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        flex: none;
-      }
-      .before .dot {
-        background: var(--bad);
-      }
-      .after .dot {
-        background: var(--accent);
-      }
-      .sub {
-        font-weight: 400;
-        color: var(--muted);
-        font-size: 0.78rem;
-      }
-      .tabs {
-        display: flex;
-        gap: 0.15rem;
-        flex: none;
-      }
+      .title { display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; font-weight: 600; }
+      .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+      .before .dot { background: var(--bad); }
+      .after .dot { background: var(--accent); }
+      .sub { font-weight: 400; color: var(--muted); font-size: 0.78rem; }
+      .tabs { display: flex; gap: 0.15rem; flex: none; }
       button.tab {
-        font: inherit;
-        font-size: 0.75rem;
-        padding: 0.18rem 0.55rem;
-        background: transparent;
-        color: var(--muted);
-        border: 1px solid transparent;
-        border-radius: 6px;
-        cursor: pointer;
+        font: inherit; font-size: 0.75rem; padding: 0.18rem 0.55rem;
+        background: transparent; color: var(--muted);
+        border: 1px solid transparent; border-radius: 6px; cursor: pointer;
       }
-      button.tab:hover {
-        color: var(--fg);
-      }
-      button.tab[aria-selected='true'] {
-        background: var(--bg);
-        border-color: var(--line);
-        color: var(--fg);
-      }
+      button.tab[aria-selected='true'] { background: var(--bg); border-color: var(--line); color: var(--fg); }
 
-      .panel {
-        height: 360px;
-        overflow: auto;
-      }
-      .panel[hidden] {
-        display: none;
-      }
-      .doc {
-        padding: 1.4rem 1.5rem;
-        background: var(--bg);
-        min-height: 100%;
-      }
-      /* The left preview keeps Word's own inline styling on purpose — that IS
-         what your editor receives today. */
-      .doc.raw {
-        font-family: Calibri, Carlito, "Segoe UI", sans-serif;
-      }
-      .doc[data-theme='dark'] {
-        background: #0b0b0e;
-        color: #e4e4e7;
-      }
-      #caption {
-        margin: 0 0 1rem;
-        font-size: 0.9rem;
-        color: var(--muted);
-        max-width: 78ch;
-      }
-      #caption b {
-        color: var(--fg);
-        font-weight: 600;
-      }
-      .doc img {
-        max-width: 100%;
-      }
-      textarea.panel {
-        display: block;
-        width: 100%;
-        padding: 0.9rem;
-        resize: vertical;
-        background: var(--bg);
-        color: var(--fg);
-        border: 0;
-        outline: none;
-        font:
-          12px/1.65 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          monospace;
-        tab-size: 2;
-      }
+      .panel { height: 360px; overflow: auto; }
+      .panel[hidden] { display: none; }
+      .doc { padding: 1.3rem 1.4rem; background: var(--bg); min-height: 100%; }
+      .doc.raw { font-family: Calibri, Carlito, "Segoe UI", sans-serif; }
+      .doc[data-theme='dark'] { background: #0b0b0e; color: #e4e4e7; }
+      .doc img { max-width: 100%; }
       pre.panel {
-        margin: 0;
-        padding: 0.9rem;
-        background: var(--bg);
-        white-space: pre-wrap;
-        word-break: break-word;
-        font:
-          12px/1.65 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          monospace;
+        margin: 0; padding: 0.9rem; background: var(--bg);
+        white-space: pre-wrap; word-break: break-word;
+        font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
       }
 
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 0.9rem;
-        margin-top: 1.1rem;
-        padding: 1rem 1.15rem;
-        background: var(--soft);
-        border: 1px solid var(--line);
+      .tiptap { outline: none; min-height: 100%; }
+      .tiptap p { margin: 0 0 0.7em; }
+      .tiptap p:last-child { margin-bottom: 0; }
+      .tiptap [data-type='inline-math'],
+      .tiptap [data-type='block-math'] { cursor: pointer; border-radius: 4px; padding: 0 2px; }
+      .tiptap [data-type='inline-math']:hover,
+      .tiptap [data-type='block-math']:hover { background: var(--accent-soft); outline: 1px solid var(--accent); }
+      #loading { color: var(--muted); font-size: 0.9rem; }
+
+      #mathbar {
+        display: flex; align-items: center; gap: 0.6rem;
+        margin-top: 1rem; padding: 0.7rem 0.95rem;
+        background: var(--accent-soft);
+        border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
         border-radius: var(--radius);
+      }
+      #mathbar[hidden] { display: none; }
+      #mathbar label { font-size: 0.8rem; font-weight: 600; color: var(--accent); white-space: nowrap; }
+      #mathinput {
+        flex: 1; min-width: 0; padding: 0.35rem 0.6rem;
+        background: var(--bg); color: var(--fg);
+        border: 1px solid var(--line); border-radius: 7px;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      #mathinput:focus { outline: none; border-color: var(--accent); }
+      #mathclose {
+        font: inherit; font-size: 0.8rem; padding: 0.3rem 0.7rem; cursor: pointer;
+        background: var(--bg); color: var(--muted);
+        border: 1px solid var(--line); border-radius: 7px;
+      }
+      .stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.9rem; margin-top: 1.1rem; padding: 1rem 1.15rem;
+        background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius);
       }
       .stat .k {
-        display: block;
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--muted);
-        margin-bottom: 0.15rem;
+        display: block; font-size: 0.74rem; text-transform: uppercase;
+        letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.15rem;
       }
-      .stat .v {
-        font-size: 1.25rem;
-        font-weight: 650;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.02em;
-      }
-      .stat .v.good {
-        color: var(--accent);
-      }
-      .stat .v.zero {
-        color: var(--faint);
+      .stat .v { font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+      .stat .v.good { color: var(--accent); }
+      .stat .v.zero { color: var(--faint); }
+
+      .note {
+        margin-top: 1.5rem; padding: 0.95rem 1.15rem;
+        background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+        border-radius: var(--radius); font-size: 0.92rem;
       }
 
-      .live {
-        margin-top: 2.5rem;
-        padding: 1.25rem;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        background: var(--soft);
+      section.block { margin-top: 2.75rem; }
+      section.block h2 { font-size: 1rem; margin: 0 0 0.6rem; }
+      section.block p { margin: 0 0 0.8rem; color: var(--muted); max-width: 78ch; }
+      pre.code {
+        margin: 0; padding: 1rem 1.15rem; background: var(--soft);
+        border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto;
+        font: 12.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
       }
-      .live h2 {
-        font-size: 1rem;
-        margin: 0 0 0.3rem;
-      }
-      .live p {
-        margin: 0 0 0.85rem;
-        color: var(--muted);
-        font-size: 0.9rem;
-        max-width: 68ch;
-      }
-      #drop {
-        min-height: 76px;
-        padding: 0.9rem;
-        background: var(--bg);
-        border: 1px dashed var(--line);
-        border-radius: 9px;
-        outline: none;
-        font-size: 0.92rem;
-      }
-      #drop:focus {
-        border-style: solid;
-        border-color: var(--accent);
-      }
-      #drop:empty::before {
-        content: "Click here, then press ⌘V or Ctrl+V";
-        color: var(--faint);
-      }
-
-      .support {
-        margin-top: 2.5rem;
-      }
-      .support h2 {
-        font-size: 1rem;
-        margin: 0 0 0.6rem;
-      }
-      .support .wrap {
-        overflow-x: auto;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-      }
-      .support table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-        background: var(--soft);
-      }
-      .support th,
-      .support td {
-        text-align: left;
-        padding: 0.62rem 1rem;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-      }
-      .support th {
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--muted);
-        font-weight: 600;
-        background: var(--raised);
-      }
-      .support tr:last-child td {
-        border-bottom: 0;
-      }
-      .support .yes {
-        color: var(--accent);
-        font-weight: 600;
-      }
-      .support .no {
-        color: var(--faint);
-      }
-      .support .note {
-        margin: 0.8rem 0 0;
-        font-size: 0.88rem;
-        color: var(--muted);
-        max-width: 72ch;
-      }
-      .usage {
-        margin-top: 2.5rem;
-      }
-      .usage h2 {
-        font-size: 1rem;
-        margin: 0 0 0.6rem;
-      }
-      .usage pre {
-        margin: 0;
-        padding: 1rem 1.15rem;
-        background: var(--soft);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        overflow-x: auto;
-        font:
-          12.5px/1.7 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          monospace;
-      }
+      .examples { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
       footer {
-        margin-top: 3rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--line);
-        font-size: 0.85rem;
-        color: var(--muted);
-        max-width: 72ch;
+        margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line);
+        font-size: 0.85rem; color: var(--muted); max-width: 78ch;
       }
-      footer code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.92em;
-      }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
     </style>
   </head>
   <body>
     <main>
-      <section class="hero">
-        <span class="eyebrow">MIT · zero dependencies · 2.4 kB</span>
-        <h1>Paste from Word without losing your equations</h1>
-        <p class="lede">
-          Word puts every equation on the clipboard twice — as real maths, and as
-          a screenshot. Every editor takes the screenshot, so the author can
-          never fix a typo in their own formula again.
-          <b>wordpaste takes the maths.</b>
-        </p>
-        <p class="hero-links">
-          <a class="btn primary" href="https://www.npmjs.com/package/wordpaste">
-            <code>npm i wordpaste</code>
-          </a>
-          <a class="btn" href="https://github.com/smrifat1411/wordpaste">GitHub</a>
-          <a class="btn" href="https://github.com/smrifat1411/wordpaste#readme">Docs</a>
-        </p>
-      </section>
+      <span class="eyebrow">MIT · zero dependencies · 2.4 kB</span>
+      <h1>Paste from Word without the mess</h1>
+      <p class="lede">
+        Word's clipboard HTML is full of invisible styling, dead image links, and
+        equations flattened into screenshots. <b>wordpaste cleans all of it —
+        and keeps the equations editable.</b>
+      </p>
+      <p class="hero-links">
+        <a class="btn primary" href="https://www.npmjs.com/package/wordpaste"><code>npm i wordpaste</code></a>
+        <a class="btn" href="https://github.com/smrifat1411/wordpaste">GitHub</a>
+        <a class="btn" href="https://github.com/smrifat1411/wordpaste#readme">Docs</a>
+      </p>
 
       <div class="toolbar">
         <span class="label">Sample:</span>
@@ -529,224 +227,151 @@
               <span class="sub">what a typical editor keeps</span>
             </span>
             <div class="tabs" role="tablist">
-              <button class="tab" data-panel="beforeDoc" role="tab" aria-selected="true">
-                Preview
-              </button>
-              <button class="tab" data-panel="beforeSrc" role="tab" aria-selected="false">
-                Source
-              </button>
+              <button class="tab" data-panel="beforeDoc" role="tab" aria-selected="true">Result</button>
+              <button class="tab" data-panel="beforeSrc" role="tab" aria-selected="false">Clipboard HTML</button>
             </div>
           </div>
           <div id="beforeDoc" class="panel doc raw"></div>
-          <textarea
-            id="beforeSrc"
-            class="panel"
-            spellcheck="false"
-            aria-label="Clipboard HTML — editable"
-            hidden
-          ></textarea>
+          <pre id="beforeSrc" class="panel" hidden></pre>
         </section>
 
         <section class="pane after">
           <div class="head">
             <span class="title">
               <span class="dot"></span>With wordpaste
-              <span class="sub">equations still editable</span>
+              <span class="sub">a real editor — click an equation</span>
             </span>
             <div class="tabs" role="tablist">
-              <button class="tab" data-panel="afterDoc" role="tab" aria-selected="true">
-                Preview
-              </button>
-              <button class="tab" data-panel="afterSrc" role="tab" aria-selected="false">
-                Source
-              </button>
+              <button class="tab" data-panel="afterDoc" role="tab" aria-selected="true">Editor</button>
+              <button class="tab" data-panel="afterSrc" role="tab" aria-selected="false">Clean HTML</button>
             </div>
           </div>
-          <div id="afterDoc" class="panel doc"></div>
+          <div id="afterDoc" class="panel doc"><p id="loading">Loading the editor…</p></div>
           <pre id="afterSrc" class="panel" hidden></pre>
         </section>
       </div>
 
+      <div id="mathbar" hidden>
+        <label for="mathinput">Equation (LaTeX)</label>
+        <input id="mathinput" spellcheck="false" />
+        <button id="mathclose" type="button">close</button>
+      </div>
+
       <div class="stats" id="stats"></div>
 
-      <section class="live">
-        <h2>Use your own document</h2>
-        <p>
-          Copy anything from Word, Google Docs or LibreOffice and paste it below.
-          It loads into the comparison above. Everything runs in your browser —
-          nothing is uploaded.
-        </p>
-        <div id="drop" contenteditable="true"></div>
+      <p class="note">
+        <b>That right panel is a real Tiptap editor.</b> Click any equation to
+        change it, or copy something from Word and paste straight into it.
+        Everything runs in your browser — nothing is uploaded.
+      </p>
+
+      <section class="block">
+        <h2>The code doing it</h2>
+        <p>This is the whole integration — the same extension the editor above is running.</p>
+        <pre class="code"><code>import { Extension } from '@tiptap/core';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+export const WordPaste = Extension.create({
+  name: 'wordPaste',
+  transformPastedHTML(html) {
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
+  },
+});</code></pre>
       </section>
 
-      <section class="support">
-        <h2>What it handles</h2>
-        <div class="wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>You copy from</th>
-                <th>Junk cleaned</th>
-                <th>Equations kept editable</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><b>Microsoft Word</b></td>
-                <td class="yes">Yes</td>
-                <td class="yes">Yes — OMML</td>
-              </tr>
-              <tr>
-                <td><b>LibreOffice Writer</b></td>
-                <td class="yes">Yes</td>
-                <td class="yes">Yes — MathML</td>
-              </tr>
-              <tr>
-                <td>Outlook</td>
-                <td class="yes">Yes</td>
-                <td class="no">n/a</td>
-              </tr>
-              <tr>
-                <td>Excel</td>
-                <td class="yes">Yes</td>
-                <td class="no">n/a</td>
-              </tr>
-              <tr>
-                <td>Google Docs</td>
-                <td>Colour only</td>
-                <td class="no">No</td>
-              </tr>
-              <tr>
-                <td>Anything else</td>
-                <td class="no">Left untouched</td>
-                <td class="no">&mdash;</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="note">
-          Google Docs equations cannot be recovered by anyone &mdash; Docs puts
-          them on the clipboard as images already. Word is the unusual one: it
-          sends the picture <i>and</i> the real maths, which is the gap this
-          package exploits. Docs still gets the colour fix, because it writes
-          <code>color: rgb(0,0,0)</code> inline and that turns black-on-black on
-          a dark theme.
+      <section class="block">
+        <h2>Runnable examples</h2>
+        <p>Single HTML files — no install, no build. Open one and paste from Word.</p>
+        <p class="examples">
+          <a class="btn" href="./examples/tiptap.html">Tiptap</a>
+          <a class="btn" href="./examples/prosemirror.html">ProseMirror</a>
+          <a class="btn" href="./examples/lexical.html">Lexical</a>
+          <a class="btn" href="./examples/plain.html">Plain JavaScript</a>
         </p>
-      </section>
-
-      <section class="usage">
-        <h2>That is three lines in your editor</h2>
-        <pre><code>import { isWordHtml, hasWordMath, cleanWordHtml } from 'wordpaste';
-
-const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;</code></pre>
       </section>
 
       <footer>
-        The left panel deliberately keeps Word's own inline styling and shows the
-        broken <code>file://</code> screenshot — that is exactly what a browser
-        hands your editor. Samples are Word-shaped clipboard HTML with real
-        <code>mso-</code> attributes and real <code>&lt;m:oMath&gt;</code> markup.
-        Equations are drawn here with <a href="https://katex.org">KaTeX</a> to
-        show the LaTeX is genuine; wordpaste itself renders nothing and depends
-        on nothing. —
+        The left panel drops tags an editor has no rule for and keeps their text
+        — the same thing ProseMirror does — which is why an unconverted equation
+        collapses into loose characters there. Samples are Word-shaped clipboard
+        HTML with real <code>mso-</code> attributes and real
+        <code>&lt;m:oMath&gt;</code> markup. —
         <a href="https://github.com/smrifat1411/wordpaste">MIT</a>
       </footer>
     </main>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-      integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
-      crossorigin="anonymous"
-    ></script>
     <script type="module">
+      import { Editor, Extension } from 'https://esm.sh/@tiptap/core@3';
+      import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
+      import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
       import {
-        isWordHtml,
-        hasWordMath,
-        cleanWordHtml,
-        stripInlineColors,
+        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
       } from 'https://esm.sh/wordpaste';
 
+      const Mathematics = mathMod.Mathematics ?? mathMod.default;
       const $ = (id) => document.getElementById(id);
-      const beforeDoc = $('beforeDoc');
-      const beforeSrc = $('beforeSrc');
-      const afterDoc = $('afterDoc');
-      const afterSrc = $('afterSrc');
-      const stats = $('stats');
-      const drop = $('drop');
+      const beforeDoc = $('beforeDoc'), beforeSrc = $('beforeSrc');
+      const afterDoc = $('afterDoc'), afterSrc = $('afterSrc'), stats = $('stats');
 
-      // Word's HTML clipboard shape: xmlns declarations, mso-* styling, MsoNormal
-      // classes, <o:p> spacers, and every equation shipped twice — once as OMML
-      // and once as a downlevel screenshot inside <![if !msEquation]>.
       const SAMPLES = {
         equation:
           '<html xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
-          '      xmlns:w="urn:schemas-microsoft-com:office:word"\n' +
           '      xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">\n' +
-          '<body>\n' +
-          '<p class=MsoNormal style=\'margin:0cm;mso-bidi-font-size:11.0pt;font-family:"Calibri",sans-serif\'>\n' +
-          '  Darcy&#8211;Weisbach head loss between two points:<o:p></o:p></p>\n' +
+          '<p class=MsoNormal style=\'text-align:center;mso-bidi-font-size:11.0pt;font-family:"Calibri",sans-serif\'>\n' +
+          '  Darcy&#8211;Weisbach head loss<o:p></o:p></p>\n' +
           '<p class=MsoNormal style=\'mso-pagination:widow-orphan\'>\n' +
           '<m:oMathPara><m:oMath>' +
           '<m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
-          '<m:r>-</m:r>' +
-          '<m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>B</m:r></m:sub></m:sSub>' +
-          '<m:r>=f</m:r>' +
-          '<m:f><m:num><m:r>L</m:r>' +
+          '<m:r>-</m:r><m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>B</m:r></m:sub></m:sSub>' +
+          '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r>' +
           '<m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup></m:sSup>' +
-          '</m:num><m:den><m:r>2gD</m:r></m:den></m:f>' +
-          '</m:oMath></m:oMathPara>\n' +
+          '</m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath></m:oMathPara>\n' +
           '<![if !msEquation]><img width=213 height=44\n' +
           '  src="file:///C:/Users/me/AppData/Local/Temp/msohtmlclip1/clip_image001.png"><![endif]>\n' +
-          '<o:p></o:p></p>\n' +
-          '</body></html>',
-
+          '<o:p></o:p></p></html>',
         document:
-          '<html xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
-          '      xmlns:w="urn:schemas-microsoft-com:office:word">\n' +
-          '<body lang=EN-GB style=\'word-wrap:break-word\'>\n' +
-          '<p class=MsoNormal style=\'margin-bottom:8.0pt;line-height:107%;\n' +
-          '  font-size:11.0pt;font-family:"Calibri",sans-serif;mso-fareast-language:EN-US\'>\n' +
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office">\n' +
+          '<p class=MsoNormal style=\'margin-bottom:8.0pt;font-size:11.0pt;\n' +
+          '  font-family:"Calibri",sans-serif;mso-fareast-language:EN-US\'>\n' +
           '  <b style=\'mso-bidi-font-weight:normal\'>Question 4.</b> State the\n' +
-          '  <i style=\'mso-bidi-font-style:normal\'>continuity equation</i> and define each term.\n' +
-          '  <o:p></o:p></p>\n' +
-          '<p class=MsoNormal style=\'mso-pagination:widow-orphan;mso-bidi-font-size:11.0pt\'>\n' +
-          '  <img width=320 height=180\n' +
-          '    src="file:///C:/Users/me/AppData/Local/Temp/msohtmlclip1/clip_image002.jpg">\n' +
-          '  <o:p></o:p></p>\n' +
-          '<p class=MsoNormal><span style=\'mso-spacerun:yes\'>&nbsp;</span><o:p></o:p></p>\n' +
-          '</body></html>',
-
+          '  <i>continuity equation</i> and define each term.<o:p></o:p></p>\n' +
+          '<p class=MsoNormal><img width=320 height=180\n' +
+          '  src="file:///C:/Users/me/AppData/Local/Temp/msohtmlclip1/clip_image002.jpg"><o:p></o:p></p>\n' +
+          '</html>',
         mathml:
           '<p>Quadratic roots, pasted from LibreOffice Writer:</p>\n' +
-          '<p><math xmlns="http://www.w3.org/1998/Math/MathML">\n' +
-          '  <mfrac>\n' +
-          '    <mrow>\n' +
-          '      <mo>-</mo><mi>b</mi><mo>&#177;</mo>\n' +
-          '      <msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt>\n' +
-          '    </mrow>\n' +
-          '    <mrow><mn>2</mn><mi>a</mi></mrow>\n' +
-          '  </mfrac>\n' +
-          '</math></p>',
-
+          '<p><math xmlns="http://www.w3.org/1998/Math/MathML"><mfrac><mrow>\n' +
+          '  <mo>-</mo><mi>b</mi><mo>&#177;</mo>\n' +
+          '  <msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt>\n' +
+          '</mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math></p>',
         docs:
           '<meta charset="utf-8">\n' +
           '<b style="font-weight:normal" id="docs-internal-guid-1a2b3c">\n' +
-          '<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:0pt;text-align:center">\n' +
+          '<p dir="ltr" style="line-height:1.38;text-align:center">\n' +
           '  <span style="font-size:11pt;font-family:Arial;color:rgb(0,0,0);\n' +
-          '    background-color:transparent;vertical-align:baseline;white-space:pre-wrap">\n' +
-          '    Pasted from Google Docs. On a dark theme this arrives as black text\n' +
-          '    on a black background, because Docs writes the colour inline.\n' +
-          '  </span></p></b>',
+          '    background-color:transparent">Pasted from Google Docs. On a dark theme this\n' +
+          '    arrives as black text on a black background.</span></p></b>',
+      };
+
+      const CAPTIONS = {
+        equation:
+          'Word ships every equation twice — as real maths and as a screenshot. On the left the maths tag is unknown to the editor, so it collapses to loose characters and all that survives is a dead <b>file://</b> image. On the right it is a real equation you can click.',
+        document:
+          "No equations here at all — just a normal Word paragraph. Word's fonts, <b>mso-</b> classes and a <b>file://</b> image that only exists on the writer's computer, all gone on the right.",
+        mathml:
+          'LibreOffice sends <b>MathML</b>. Your editor has no rule for the <b>&lt;math&gt;</b> tag, so it drops it and keeps only the characters — the formula on the left is destroyed.',
+        docs:
+          'Shown on a <b>dark theme</b>, because that is where this bites. Google Docs writes <b>color: rgb(0,0,0)</b> inline, so on the left the text is black on black.',
       };
 
       // What a ProseMirror-style schema does with a tag it has no rule for:
-      // drop the element, keep its text. Verified in prosemirror-model's
-      // addElement — no matching rule falls through to addAll(dom).
+      // drop the element, keep its text.
       const EDITOR_TAGS = new Set(
         ('p br strong b em i u s a ul ol li h1 h2 h3 h4 h5 h6 blockquote code pre ' +
           'img table thead tbody tr td th span div sub sup hr').toUpperCase().split(' '),
       );
-
       const asEditorWouldKeep = (html) => {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         for (const el of [...doc.body.querySelectorAll('*')]) {
@@ -755,83 +380,97 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
         return doc.body.innerHTML;
       };
 
-      const CAPTIONS = {
-        equation:
-          'Word ships every equation twice — as real maths and as a screenshot. On the left the maths tag is unknown to the editor, so it collapses to loose characters and all that is left is a dead <b>file://</b> image. On the right the maths survived.',
-        document:
-          "Word's fonts, <b>mso-</b> classes and a <b>file://</b> image that only exists on the writer's own computer. All gone on the right.",
-        mathml:
-          'LibreOffice sends <b>MathML</b>. Your editor has no rule for the <b>&lt;math&gt;</b> tag, so it drops it and keeps only the characters — the formula on the left is destroyed. On the right it became an editable equation.',
-        docs:
-          'Shown on a <b>dark theme</b>, because that is where this bites. Google Docs writes <b>color: rgb(0,0,0)</b> inline, so on the left the text is black on black.',
-      };
-
-      const renderMath = (root) => {
-        root.querySelectorAll('[data-latex]').forEach((el) => {
-          const displayMode = el.dataset.type === 'block-math';
-          try {
-            katex.render(el.dataset.latex, el, { displayMode, throwOnError: false });
-          } catch {
-            el.textContent = el.dataset.latex;
-          }
-        });
-      };
+      const clean = (html) =>
+        stripInlineColors(isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html);
 
       const stat = (k, v, tone) =>
         `<div class="stat"><span class="k">${k}</span><span class="v ${tone || ''}">${v}</span></div>`;
 
-      const run = () => {
-        const raw = beforeSrc.value;
-
-        if (!raw.trim()) {
-          beforeDoc.innerHTML = afterDoc.innerHTML = '';
-          afterSrc.textContent = '';
-          stats.innerHTML = stat('Waiting', 'paste something', 'zero');
-          return;
-        }
-
+      const showComparison = (raw) => {
+        const out = clean(raw);
         beforeDoc.innerHTML = asEditorWouldKeep(raw);
+        beforeSrc.textContent = raw;
+        afterSrc.textContent = out;
 
-        const fromWord = isWordHtml(raw);
-        // LibreOffice pastes bare <math> with no mso- markers, so isWordHtml
-        // alone would skip a document whose equations are recoverable.
-        const clean = stripInlineColors(fromWord || hasWordMath(raw) ? cleanWordHtml(raw) : raw);
-
-        afterDoc.innerHTML = clean;
-        renderMath(afterDoc);
-        afterSrc.textContent = clean;
-
-        const equations = (clean.match(/data-latex=/g) || []).length;
+        const equations = (out.match(/data-latex=/g) || []).length;
         const deadImages = (raw.match(/file:\/\//g) || []).length;
-        const shrink = Math.max(0, Math.round((1 - clean.length / raw.length) * 100));
-
+        const shrink = Math.max(0, Math.round((1 - out.length / raw.length) * 100));
         stats.innerHTML = [
           stat('Equations kept editable', equations, equations ? 'good' : 'zero'),
           stat('Dead images removed', deadImages, deadImages ? 'good' : 'zero'),
-          stat('Size', `${raw.length.toLocaleString()} → ${clean.length.toLocaleString()}`),
+          stat('Size', `${raw.length.toLocaleString()} → ${out.length.toLocaleString()}`),
           stat('Smaller by', `${shrink}%`, shrink ? 'good' : 'zero'),
-          stat('Word clipboard', fromWord ? 'yes' : 'no', fromWord ? 'good' : 'zero'),
+          stat('Word clipboard', isWordHtml(raw) ? 'yes' : 'no', isWordHtml(raw) ? 'good' : 'zero'),
         ].join('');
+        return out;
       };
 
-      const clearChips = () =>
-        document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      // The entire integration — the same extension shown in the code block above.
+      const WordPaste = Extension.create({
+        name: 'wordPaste',
+        transformPastedHTML(html) {
+          return showComparison(html);
+        },
+      });
 
-      const setSampleChrome = (key) => {
-        const caption = document.getElementById('caption');
-        caption.innerHTML = key ? CAPTIONS[key] : 'Editing your own HTML — paste from Word below to load a real one.';
+      afterDoc.innerHTML = '';
+      const editor = new Editor({
+        element: afterDoc,
+        extensions: [
+          StarterKit,
+          WordPaste,
+          Mathematics.configure({
+            inlineOptions: { onClick: (node, pos) => openMathBar(node, pos) },
+            blockOptions: { onClick: (node, pos) => openMathBar(node, pos, true) },
+          }),
+        ],
+        onUpdate: ({ editor }) => (afterSrc.textContent = editor.getHTML()),
+      });
+
+      const mathbar = $('mathbar'), mathinput = $('mathinput');
+      let editing = null;
+
+      function openMathBar(node, pos, block = false) {
+        editing = { pos, block };
+        mathinput.value = node.attrs.latex;
+        mathbar.hidden = false;
+        mathinput.focus();
+        mathinput.select();
+      }
+
+      mathinput.addEventListener('input', () => {
+        if (!editing) return;
+        const args = { latex: mathinput.value, pos: editing.pos };
+        const chain = editor.chain();
+        (editing.block ? chain.updateBlockMath(args) : chain.updateInlineMath(args)).run();
+        afterSrc.textContent = editor.getHTML();
+      });
+
+      $('mathclose').addEventListener('click', () => {
+        mathbar.hidden = true;
+        editing = null;
+      });
+
+      const setChrome = (key) => {
+        mathbar.hidden = true;
+        editing = null;
+        $('caption').innerHTML = key
+          ? CAPTIONS[key]
+          : 'Your own paste. Click an equation to edit it.';
         for (const el of [beforeDoc, afterDoc]) {
           if (key === 'docs') el.dataset.theme = 'dark';
           else delete el.dataset.theme;
         }
       };
 
+      const clearChips = () =>
+        document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', 'false'));
+
       const load = (key, button) => {
-        beforeSrc.value = SAMPLES[key];
         clearChips();
         button?.setAttribute('aria-pressed', 'true');
-        setSampleChrome(key);
-        run();
+        setChrome(key);
+        editor.commands.setContent(showComparison(SAMPLES[key]));
       };
 
       document.querySelectorAll('.chip').forEach((button) => {
@@ -841,33 +480,18 @@ const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html
 
       document.querySelectorAll('.tab').forEach((tab) => {
         tab.addEventListener('click', () => {
-          tab.closest('.tabs')
-            .querySelectorAll('.tab')
-            .forEach((t) => {
-              const on = t === tab;
-              t.setAttribute('aria-selected', String(on));
-              $(t.dataset.panel).hidden = !on;
-            });
+          tab.closest('.tabs').querySelectorAll('.tab').forEach((t) => {
+            const on = t === tab;
+            t.setAttribute('aria-selected', String(on));
+            $(t.dataset.panel).hidden = !on;
+          });
         });
       });
 
-      beforeSrc.addEventListener('input', () => {
+      // A paste into the editor runs transformPastedHTML, which fills both panels.
+      editor.view.dom.addEventListener('paste', () => {
         clearChips();
-        setSampleChrome(null);
-        run();
-      });
-
-      drop.addEventListener('paste', (event) => {
-        const html = event.clipboardData?.getData('text/html');
-        if (!html) return;
-
-        event.preventDefault();
-        drop.textContent = `Loaded ${html.length.toLocaleString()} characters — see the comparison above.`;
-        beforeSrc.value = html;
-        clearChips();
-        setSampleChrome(null);
-        run();
-        document.querySelector('.grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setChrome(null);
       });
 
       load('equation', document.querySelector('[data-sample="equation"]'));

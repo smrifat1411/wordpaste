@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wordpaste + ProseMirror</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+        font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+      p.sub { margin: 0 0 1.25rem; color: #71717a; }
+      a { color: #059669; }
+      #editor {
+        min-height: 180px; padding: 1rem; border: 1px solid #d4d4d8; border-radius: 10px;
+      }
+      .ProseMirror { outline: none; }
+      .ProseMirror p { margin: 0 0 .7em; }
+      pre {
+        margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
+        background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
+        font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .warn { font-size: .9rem; color: #b45309; }
+      @media (prefers-color-scheme: dark) {
+        #editor { border-color: #3f3f46; }
+        pre { background: #18181b; border-color: #27272a; }
+        p.sub { color: #a1a1aa; }
+        .warn { color: #fbbf24; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>wordpaste + ProseMirror</h1>
+    <p class="sub">
+      Raw ProseMirror, no Tiptap. Copy from Word and paste below.
+      <a href="../">Back to the playground</a>
+    </p>
+
+    <div id="editor"></div>
+
+    <p class="warn">
+      Note: this uses <code>prosemirror-schema-basic</code>, which has no maths
+      node — so an equation lands as its LaTeX text. That is wordpaste doing its
+      job; rendering it is your schema's business. The Tiptap example shows the
+      rendered version.
+    </p>
+
+    <pre id="code"></pre>
+
+    <script type="module">
+      import { EditorState } from 'https://esm.sh/prosemirror-state@1';
+      import { EditorView } from 'https://esm.sh/prosemirror-view@1';
+      import { schema } from 'https://esm.sh/prosemirror-schema-basic@1';
+      import { DOMParser as PMParser } from 'https://esm.sh/prosemirror-model@1';
+      import {
+        isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors,
+      } from 'https://esm.sh/wordpaste';
+
+      const start = document.createElement('div');
+      start.innerHTML = '<p>Paste from Word here…</p>';
+
+      new EditorView(document.getElementById('editor'), {
+        state: EditorState.create({ doc: PMParser.fromSchema(schema).parse(start) }),
+        // The whole integration is this one prop.
+        transformPastedHTML(html) {
+          return stripInlineColors(
+            isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+          );
+        },
+      });
+
+      document.getElementById('code').textContent = `import { EditorView } from 'prosemirror-view';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+new EditorView(element, {
+  state,
+  transformPastedHTML(html) {
+    return stripInlineColors(
+      isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html,
+    );
+  },
+});`;
+    </script>
+  </body>
+</html>

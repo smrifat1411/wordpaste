@@ -31,6 +31,9 @@ out. No framework, no build step, no dependencies.
 - **Any editor** — plain `contenteditable`, Tiptap, ProseMirror, Lexical
 - **Works in the browser today**, and in Node with jsdom
 
+Every integration below has a **runnable single-file example** — no install, no
+build. Open it and paste from Word.
+
 ## Contents
 
 - [Install](#install)
@@ -119,6 +122,10 @@ and leaves its HTML alone. `stripInlineColors` still runs, which is the part
 that matters — Docs writes `color: rgb(0,0,0)` inline, so on a dark theme its
 text arrives black on black.
 
+**Formatting:** bold, italic, underline, super/subscript, links, real lists,
+tables and `text-align` survive. Colour, highlight, font family and font size do
+not — that is the point, so Word's design does not leak into your app.
+
 Its equations cannot be recovered by anyone: Docs puts them on the clipboard as
 images already. Word is the unusual one — it sends the picture *and* the real
 maths, which is the gap this package exploits.
@@ -126,6 +133,8 @@ maths, which is the gap this package exploits.
 ## Use it with
 
 ### Plain JavaScript
+
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/plain.html)**
 
 No editor library. This is a complete, working example — save it as an HTML file
 and open it.
@@ -156,6 +165,8 @@ and open it.
 paste cannot smuggle black text into a dark theme.
 
 ### Tiptap
+
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/tiptap.html)**
 
 `transformPastedHTML` is a documented method on a
 [custom extension](https://tiptap.dev/docs/editor/extensions/custom-extensions/create-new).
@@ -191,6 +202,8 @@ FileHandler.configure({
 
 ### ProseMirror
 
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/prosemirror.html)**
+
 Tiptap is built on ProseMirror, but if you use it directly the hook is an editor
 prop. ProseMirror's own docs describe it as "for example to clean it up".
 
@@ -208,29 +221,39 @@ new EditorView(element, {
 
 ### Lexical
 
-Lexical's [DOM import](https://lexical.dev/docs/serialization/dom-import) lets
-you claim `text/html` and see the raw string. Clean it before parsing:
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/lexical.html)**
+
+Claim the paste command, clean the HTML, then let Lexical parse it. This uses
+long-standing stable APIs, so it works across Lexical versions.
 
 ```js
-configExtension(ClipboardImportExtension, {
-  $importMimeType: {
-    'text/html': [
-      (html, selection, _$next, dataTransfer) => {
-        const clean = isWordHtml(html) || hasWordMath(html) ? cleanWordHtml(html) : html;
-        const dom = new DOMParser().parseFromString(clean, 'text/html');
-        const nodes = $generateNodesFromDOMViaExtension(dom, {
-          context: [
-            contextValue(ImportSource, 'paste'),
-            contextValue(ImportSourceDataTransfer, dataTransfer),
-          ],
-        });
-        $insertGeneratedNodes($getEditor(), nodes, selection);
-        return true;
-      },
-    ],
+import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
+import { $generateNodesFromDOM } from '@lexical/html';
+import { isWordHtml, hasWordMath, cleanWordHtml, stripInlineColors } from 'wordpaste';
+
+editor.registerCommand(
+  PASTE_COMMAND,
+  (event) => {
+    const html = event.clipboardData?.getData('text/html');
+    if (!html || !(isWordHtml(html) || hasWordMath(html))) return false;
+
+    event.preventDefault();
+    const clean = stripInlineColors(cleanWordHtml(html));
+    const dom = new DOMParser().parseFromString(clean, 'text/html');
+
+    editor.update(() => {
+      $getRoot().selectEnd();
+      $insertNodes($generateNodesFromDOM(editor, dom));
+    });
+    return true;
   },
-});
+  COMMAND_PRIORITY_HIGH,
+);
 ```
+
+Lexical's default nodes have no maths node, so an equation lands as its LaTeX
+text. Rendering it is your node set's business — see
+[Showing the maths](#showing-the-maths).
 
 ### React, Vue, Svelte
 
@@ -266,6 +289,11 @@ The main one. In order, it:
    with every equation.
 5. Removes namespaced elements (`<o:p>`, `<w:*>`, `<v:*>`), inline styles,
    `mso-*` classes, `file://` images and empty paragraphs.
+
+**`text-align` is the one style kept** — it is layout the author chose, not
+Word decoration. Word writes `text-align:justify` on justified paragraphs, so a
+justified document arrives justified. Everything else goes: colour, highlight,
+font family and size.
 
 `options.renderMath: (latex, block) => string` — see
 [Showing the maths](#showing-the-maths).
