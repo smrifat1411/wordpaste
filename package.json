@@ -1,6 +1,6 @@
 {
   "name": "wordpaste",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Clean Microsoft Word clipboard HTML on paste and keep the equations editable. Converts Word OMML and MathML to LaTeX. Zero dependencies, works with Tiptap, Lexical, ProseMirror or plain contenteditable.",
   "keywords": [
     "word",

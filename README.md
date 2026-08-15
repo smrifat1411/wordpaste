@@ -33,7 +33,8 @@ You do not need to know where the paste came from. Word, LibreOffice, Outlook,
 Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
 
 - **Equations survive** as editable LaTeX instead of screenshots
-- **2.5 kB gzipped**, zero dependencies, types included
+- **Lists become real lists**, nested, numbered by the browser again
+- **3.5 kB gzipped**, zero dependencies, types included
 - **One line** to wire into any editor
 - JavaScript and TypeScript, no framework
 
@@ -71,7 +72,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.8.0';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.9.0';
 </script>
 ```
 
@@ -244,6 +245,14 @@ Bold, italic, underline, super/subscript, links, lists, tables and `text-align`
 survive. Colour, highlight, font family and font size do not — that is the
 point, so the source document's design does not leak into your app.
 
+**Lists become real lists.** Word does not paste a list as a list — every item
+is a `<p>` with the bullet or number sitting in the text as literal characters.
+Strip the styling naively and you keep "1." and "2." frozen in place, so
+reordering or inserting an item leaves the numbering wrong forever. wordpaste
+reads Word's markers before discarding them and rebuilds `<ul>`/`<ol>`, with
+nesting, the original sequence (`1.` `a.` `i.` `I.`) and a `start` when the list
+does not begin at 1.
+
 **Your editor has to want `text-align`.** wordpaste emits
 `style="text-align:center"`, but an editor drops any style its schema has no
 rule for. In Tiptap that means adding
@@ -282,8 +291,6 @@ See [SECURITY.md](./SECURITY.md).
 
 ## Limits
 
-- **Word's bullet lists are not rebuilt.** Word pastes list items as styled
-  `<p>` tags; this strips the styling but does not reconstruct `<ul>`/`<ol>`.
 - **Images on the writer's disk are dropped.** Word points at `file:///C:/…`,
   a dead link on the web. `https:` and `data:` images are kept. The real bytes
   arrive separately as `clipboardData.files` — uploading those is your app's job.

@@ -38,7 +38,8 @@ export function isWordHtml(html: string): boolean {
     html.includes('xmlns:m="http://schemas.openxmlformats.org') ||
     html.includes('<!--[if') ||
     html.includes('mso-bidi') ||
-    html.includes('mso-fareast')
+    html.includes('mso-fareast') ||
+    html.includes('mso-list')
   );
 }
 
@@ -211,6 +212,154 @@ export function cleanGoogleDocsHtml(html: string): string {
   return doc.body.innerHTML;
 }
 
+// ── Word lists ─────────────────────────────────────────────────────────────
+
+/**
+ * Word does not paste a list as a list. Every item arrives as a <p> carrying
+ * `mso-list: l0 level1 lfo1` in its style, with the bullet or number sitting in
+ * the text as a `mso-list:Ignore` span. Strip the styles and you keep "1." and
+ * "2." frozen into the paragraph — reorder or insert an item and the numbering
+ * is wrong forever, because nothing is numbering it any more.
+ *
+ * So the markers must be read before they are thrown away: they are the only
+ * record of whether the list was ordered, which sequence it used, and where it
+ * started. Word itself flags them `Ignore`, which is exactly the hint that they
+ * are presentation, not content.
+ */
+const MSO_LIST = /mso-list\s*:\s*(l\d+)\s+level(\d+)/i;
+
+type ListRunItem = { el: Element; level: number; marker: string };
+type ListShape = { ordered: boolean; type?: string; start?: number };
+
+/** The `mso-list:Ignore` span holding the literal bullet or number. */
+function markerSpans(el: Element): Element[] {
+  return Array.from(el.querySelectorAll('span[style*="mso-list"]')).filter((s) =>
+    /ignore/i.test(s.getAttribute('style') ?? ''),
+  );
+}
+
+function readListItem(el: Element): ListRunItem & { listId: string } | null {
+  const found = MSO_LIST.exec(el.getAttribute('style') ?? '');
+  if (!found) return null;
+  return {
+    el,
+    listId: found[1]!.toLowerCase(),
+    level: Number(found[2]),
+    marker: markerSpans(el)[0]?.textContent ?? '',
+  };
+}
+
+/** "1." / "a)" / "IV." → ordered. Word's bullets (·, o, §, ) carry no
+ *  trailing punctuation — 'o' is a Courier bullet, not the letter. */
+function parseMarker(marker: string): { ordered: boolean; body?: string } {
+  const m = marker.replace(/[\s ]+/g, '');
+  if (!/^[([]?[0-9A-Za-z]+[.)\]]$/.test(m)) return { ordered: false };
+  return { ordered: true, body: m.replace(/^[([]/, '').replace(/[.)\]]$/, '') };
+}
+
+/**
+ * Decide the shape from every marker at this level, not just the first — "i."
+ * alone is ambiguous between roman and alpha, but "i., ii., iii." is not.
+ */
+function readListShape(markers: string[]): ListShape {
+  const parsed = markers.map(parseMarker);
+  if (!parsed.some((p) => p.ordered)) return { ordered: false };
+
+  const bodies = parsed.filter((p) => p.ordered).map((p) => p.body!);
+  const every = (re: RegExp) => bodies.every((b) => re.test(b));
+  const multi = bodies.some((b) => b.length > 1);
+
+  if (every(/^\d+$/)) {
+    const start = Number(bodies[0]);
+    return { ordered: true, start: start > 1 ? start : undefined };
+  }
+  if (every(/^[ivxlcdm]+$/) && multi) return { ordered: true, type: 'i' };
+  if (every(/^[IVXLCDM]+$/) && multi) return { ordered: true, type: 'I' };
+  if (every(/^[a-z]+$/)) return { ordered: true, type: 'a' };
+  if (every(/^[A-Z]+$/)) return { ordered: true, type: 'A' };
+  return { ordered: true };
+}
+
+function makeList(doc: Document, shape: ListShape): Element {
+  const list = doc.createElement(shape.ordered ? 'ol' : 'ul');
+  if (shape.type) list.setAttribute('type', shape.type);
+  if (shape.start) list.setAttribute('start', String(shape.start));
+  return list;
+}
+
+/** Word pads after the marker; once the marker span goes the padding is litter. */
+function trimLeading(li: Element): void {
+  while (
+    li.firstChild &&
+    li.firstChild.nodeType === Node.TEXT_NODE &&
+    !(li.firstChild.textContent ?? '').replace(/[\s ]+/g, '')
+  ) {
+    li.firstChild.remove();
+  }
+}
+
+function buildList(doc: Document, run: ListRunItem[]): Element {
+  const base = run[0]!.level;
+  const shapeAt = (level: number) =>
+    readListShape(run.filter((r) => r.level === level).map((r) => r.marker));
+
+  const root = makeList(doc, shapeAt(base));
+  // stack[n] is the list holding items at depth n.
+  const stack: Element[] = [root];
+
+  for (const { el, level } of run) {
+    const depth = Math.max(0, level - base);
+
+    // Deeper than anything open — nest new lists inside the current last item.
+    while (stack.length <= depth) {
+      const parent = stack[stack.length - 1]!;
+      const host =
+        parent.lastElementChild ?? parent.appendChild(doc.createElement('li'));
+      const nested = makeList(doc, shapeAt(base + stack.length));
+      host.appendChild(nested);
+      stack.push(nested);
+    }
+    stack.length = depth + 1;
+
+    markerSpans(el).forEach((s) => s.remove());
+
+    const li = doc.createElement('li');
+    while (el.firstChild) li.appendChild(el.firstChild);
+    trimLeading(li);
+    stack[depth]!.appendChild(li);
+  }
+
+  return root;
+}
+
+/** Replace every run of consecutive Word list paragraphs with a real list. */
+function rebuildWordLists(doc: Document): void {
+  const blocks = Array.from(doc.body.children);
+  let i = 0;
+
+  while (i < blocks.length) {
+    const first = readListItem(blocks[i]!);
+    if (!first) {
+      i++;
+      continue;
+    }
+
+    // A run ends at the first non-item, or when Word starts a different list.
+    const run: ListRunItem[] = [];
+    let j = i;
+    for (; j < blocks.length; j++) {
+      const item = readListItem(blocks[j]!);
+      if (!item || item.listId !== first.listId) break;
+      run.push(item);
+    }
+
+    const list = buildList(doc, run);
+    run[0]!.el.replaceWith(list);
+    run.slice(1).forEach((r) => r.el.remove());
+    i = j;
+  }
+}
+
 // ── Main cleaner ───────────────────────────────────────────────────────────
 
 export function cleanWordHtml(
@@ -249,10 +398,18 @@ export function cleanWordHtml(
   //    image fallbacks Word pairs with each equation (<![if !msEquation]>…).
   processed = processed
     .replace(/<!--\[if[^\]]*\]>[\s\S]*?<!\[endif\]-->/gi, '')
+    // Word guards list markers in a downlevel-REVEALED block, which is meant to
+    // be shown. Unwrap it rather than dropping it: the marker is the only record
+    // of how the list was numbered, and `rebuildWordLists` needs it below.
+    .replace(/<!\[if\s*!supportLists\s*\]>([\s\S]*?)<!\[endif\]>/gi, '$1')
     .replace(/<!\[if[^\]]*\]>[\s\S]*?<!\[endif\]>/gi, '');
 
   // 5. DOMParser structural cleanup.
   const doc = new DOMParser().parseFromString(processed, 'text/html');
+
+  // Lists first — this reads the mso-list styles and marker spans that the
+  // style and class stripping below is about to delete.
+  rebuildWordLists(doc);
 
   // Remaining namespace-prefixed elements (o:p, w:*, v:*, stray m:*) → remove.
   Array.from(doc.querySelectorAll('*'))

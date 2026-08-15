@@ -286,3 +286,82 @@ describe('cleanGoogleDocsHtml', () => {
     expect(out).not.toMatch(/color|font-family|<b[\s>]/);
   });
 });
+
+// Word's real clipboard shape for a list item: mso-list on the paragraph, the
+// marker in a downlevel-revealed block Word tells us to ignore.
+const item = (
+  text: string,
+  marker: string,
+  { level = 1, list = 'l0' } = {},
+) =>
+  `<p class=MsoListParagraphCxSpMiddle style="mso-list:${list} level${level} lfo1">` +
+  `<![if !supportLists]><span style="mso-list:Ignore">${marker}` +
+  `<span style="font:7.0pt Times New Roman">&nbsp;&nbsp;</span></span><![endif]>` +
+  `${text}</p>`;
+
+const word = (body: string) =>
+  `<html xmlns:o="urn:schemas-microsoft-com:office:office"><body>${body}</body></html>`;
+
+describe('Word lists', () => {
+  it('rebuilds a numbered list instead of freezing the numbers into the text', () => {
+    const out = cleanWordHtml(word(item('First', '1.') + item('Second', '2.')));
+
+    expect(out).toBe('<ol><li>First</li><li>Second</li></ol>');
+    // The regression this exists for: literal markers surviving as text.
+    expect(out).not.toMatch(/1\.|2\.|mso-/);
+  });
+
+  it('rebuilds a bulleted list — "o" is a Courier bullet, not an ordinal', () => {
+    expect(cleanWordHtml(word(item('A', '·') + item('B', 'o')))).toBe(
+      '<ul><li>A</li><li>B</li></ul>',
+    );
+  });
+
+  it('keeps the starting number when a list does not start at 1', () => {
+    const out = cleanWordHtml(word(item('Third', '3.') + item('Fourth', '4.')));
+    expect(out).toBe('<ol start="3"><li>Third</li><li>Fourth</li></ol>');
+  });
+
+  it('reads the sequence from the whole run, so "i." is roman not alpha', () => {
+    const out = cleanWordHtml(word(item('One', 'i.') + item('Two', 'ii.')));
+    expect(out).toBe('<ol type="i"><li>One</li><li>Two</li></ol>');
+  });
+
+  it('treats a lone lettered marker as alpha', () => {
+    const out = cleanWordHtml(word(item('A', 'a.') + item('B', 'b.')));
+    expect(out).toBe('<ol type="a"><li>A</li><li>B</li></ol>');
+  });
+
+  it('nests deeper levels inside the item above them', () => {
+    const out = cleanWordHtml(
+      word(
+        item('Top', '1.') +
+          item('Under', 'a.', { level: 2 }) +
+          item('Back', '2.'),
+      ),
+    );
+
+    expect(out).toBe(
+      '<ol><li>Top<ol type="a"><li>Under</li></ol></li><li>Back</li></ol>',
+    );
+  });
+
+  it('starts a new list when Word starts a new list id', () => {
+    const out = cleanWordHtml(
+      word(item('A', '1.') + item('B', '1.', { list: 'l1' })),
+    );
+    expect(out).toBe('<ol><li>A</li></ol><ol><li>B</li></ol>');
+  });
+
+  it('leaves ordinary paragraphs between lists alone', () => {
+    const out = cleanWordHtml(
+      word(item('A', '1.') + '<p>gap</p>' + item('B', '1.')),
+    );
+    expect(out).toBe('<ol><li>A</li></ol><p>gap</p><ol><li>B</li></ol>');
+  });
+
+  it('detects a list-only fragment with no xmlns header', () => {
+    expect(isWordHtml(item('A', '1.'))).toBe(true);
+    expect(transformPastedHTML(item('A', '1.'))).toBe('<ol><li>A</li></ol>');
+  });
+});
