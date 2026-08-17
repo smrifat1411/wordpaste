@@ -14,7 +14,7 @@
     <meta property="og:title" content="wordpaste — paste from Word, keep your equations" />
     <meta
       property="og:description"
-      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.5 kB, zero dependencies, works with Tiptap, Lexical or plain contenteditable."
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 3.6 kB, zero dependencies, works with Tiptap, Lexical or plain contenteditable."
     />
     <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -24,7 +24,7 @@
     <meta name="twitter:title" content="wordpaste — paste from Word, keep your equations" />
     <meta
       name="twitter:description"
-      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 2.5 kB, zero dependencies."
+      content="Word paste normally turns equations into screenshots. This keeps them as editable LaTeX. 3.6 kB, zero dependencies."
     />
     <link
       rel="stylesheet"
@@ -202,6 +202,7 @@
       section.block { margin-top: 2.75rem; }
       section.block h2 { font-size: 1rem; margin: 0 0 0.6rem; }
       section.block p { margin: 0 0 0.8rem; color: var(--muted); max-width: 78ch; }
+      section.faq h3 { font-size: 0.95rem; font-weight: 600; margin: 1.5rem 0 0.4rem; }
       pre.code {
         margin: 0; padding: 1rem 1.15rem; background: var(--soft);
         border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto;
@@ -218,7 +219,7 @@
   </head>
   <body>
     <main>
-      <span class="eyebrow">MIT · zero dependencies · 2.5 kB</span>
+      <span class="eyebrow">MIT · zero dependencies · 3.6 kB</span>
       <h1>Paste from Word without the mess</h1>
       <p class="lede">
         Word's clipboard HTML is full of invisible styling, dead image links, and
@@ -305,7 +306,7 @@ new Editor({
 });</code></pre>
       </section>
 
-      <section class="block">
+      <section class="block" id="examples">
         <h2>Runnable examples</h2>
         <p>Single HTML files — no install, no build. Open one and paste from Word.</p>
         <p class="examples">
@@ -315,6 +316,74 @@ new Editor({
           <a class="btn" href="./examples/prosemirror.html">ProseMirror</a>
           <a class="btn" href="./examples/lexical.html">Lexical</a>
           <a class="btn" href="./examples/vanilla.html">Vanilla JavaScript</a>
+        </p>
+      </section>
+
+      <section class="block faq">
+        <h2>The problems this solves</h2>
+
+        <h3>How do I stop Word formatting coming through on paste?</h3>
+        <p>
+          Intercept the paste, run the clipboard HTML through
+          <code>transformPastedHTML()</code>, insert the result. Colour,
+          highlight, font family and font size are dropped so the source
+          document's design cannot leak into your app. Bold, italic, underline,
+          super/subscript, links, lists, tables and <code>text-align</code>
+          survive.
+        </p>
+
+        <h3>What are all the <code>mso-</code> styles and <code>class=MsoNormal</code>?</h3>
+        <p>
+          Word writes its own private formatting language onto the clipboard —
+          hundreds of <code>mso-</code> declarations, conditional comments,
+          <code>&lt;o:p&gt;</code> tags and empty spans. None of it means
+          anything to a browser. It is stripped here.
+        </p>
+
+        <h3>Why do Word equations turn into pictures?</h3>
+        <p>
+          Word puts an equation on the clipboard twice: as a screenshot
+          <em>and</em> as real <code>&lt;m:oMath&gt;</code> markup. Editors take
+          the picture, so nobody can edit the maths again. wordpaste reads the
+          markup instead and converts OMML — and LibreOffice's MathML — to
+          LaTeX you can still change.
+        </p>
+
+        <h3>Why do Word lists paste as plain paragraphs?</h3>
+        <p>
+          Word does not send a list as a list. Every item is a
+          <code>&lt;p&gt;</code> with the bullet or number frozen into the text,
+          so reordering leaves the numbering wrong forever. wordpaste reads
+          those markers and rebuilds real <code>&lt;ul&gt;</code> and
+          <code>&lt;ol&gt;</code>, with nesting and the original
+          <code>1.</code> <code>a.</code> <code>i.</code> sequence.
+        </p>
+
+        <h3>Why does a Google Docs paste come out all bold, or unreadable on a dark theme?</h3>
+        <p>
+          Docs wraps every paste in <code>&lt;b style="font-weight:normal"&gt;</code>
+          — strip that style naively and the whole paste turns bold. It also
+          stores bold and italic as inline styles, and pastes your document's
+          text colour, which is why light text lands invisible on a light
+          editor. All three are handled. Its equations are already images on the
+          clipboard, so those cannot be recovered by anyone.
+        </p>
+
+        <h3>Does it work with Tiptap, ProseMirror, Lexical or plain contenteditable?</h3>
+        <p>
+          All of them, and Quill, React, Next.js and Vue — it is one function
+          with no framework inside it. See the
+          <a href="#examples">runnable examples above</a>. It also handles Outlook,
+          Excel and LibreOffice, and leaves ordinary web HTML alone.
+        </p>
+
+        <h3>Is it a sanitiser?</h3>
+        <p>
+          No. It removes formatting junk, not dangerous markup —
+          <code>&lt;script&gt;</code>, inline event handlers and
+          <code>javascript:</code> URLs pass straight through. Inside Tiptap,
+          ProseMirror or Lexical the schema drops those anyway. If you insert
+          the output yourself with <code>innerHTML</code>, run DOMPurify first.
         </p>
       </section>
 
@@ -333,7 +402,7 @@ new Editor({
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.9.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.0';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.

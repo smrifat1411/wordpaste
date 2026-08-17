@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste + Lexical</title>
+    <title>Paste from Word into Lexical — clean HTML, editable equations</title>
+    <meta name="description" content="Working Lexical example: clean Microsoft Word paste before Lexical parses it, and keep the equations editable instead of flat pictures. One HTML file, no build." />
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/examples/lexical.html" />
+    <meta property="og:title" content="Paste from Word into Lexical — clean HTML, editable equations" />
+    <meta property="og:description" content="Working Lexical example: clean Microsoft Word paste before Lexical parses it, and keep the equations editable instead of flat pictures. One HTML file, no build." />
+    <meta property="og:url" content="https://smrifat1411.github.io/wordpaste/examples/lexical.html" />
+    <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -61,7 +68,7 @@
       import { registerRichText, HeadingNode, QuoteNode } from 'https://esm.sh/@lexical/rich-text@0.49';
       import { $generateNodesFromDOM } from 'https://esm.sh/@lexical/html@0.49';
       import { registerHistory, createEmptyHistoryState } from 'https://esm.sh/@lexical/history@0.49';
-      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.9.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.0';
 
       const editor = createEditor({
         namespace: 'wordpaste-example',

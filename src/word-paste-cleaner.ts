@@ -23,6 +23,12 @@
 
 import { ommlToLatex, mathNodeHtml } from './omml-to-latex.js';
 
+// Node.TEXT_NODE / Node.ELEMENT_NODE by value. The `Node` global only exists in
+// a real DOM, and the documented server-side setup supplies `DOMParser` alone —
+// reading `Node.TEXT_NODE` there threw ReferenceError before any parsing began.
+const TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
+
 /** Emits the markup for one equation. `block` is true for display equations. */
 export type RenderMath = (latex: string, block: boolean) => string;
 
@@ -64,8 +70,8 @@ function childAt(el: Element, i: number): string {
 }
 
 function convertMathmlNode(node: Node): string {
-  if (node.nodeType === Node.TEXT_NODE) return node.textContent?.trim() ?? '';
-  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  if (node.nodeType === TEXT_NODE) return node.textContent?.trim() ?? '';
+  if (node.nodeType !== ELEMENT_NODE) return '';
 
   const el = node as Element;
   // localName strips any XML namespace prefix
@@ -291,7 +297,7 @@ function makeList(doc: Document, shape: ListShape): Element {
 function trimLeading(li: Element): void {
   while (
     li.firstChild &&
-    li.firstChild.nodeType === Node.TEXT_NODE &&
+    li.firstChild.nodeType === TEXT_NODE &&
     !(li.firstChild.textContent ?? '').replace(/[\s ]+/g, '')
   ) {
     li.firstChild.remove();
@@ -361,6 +367,34 @@ function rebuildWordLists(doc: Document): void {
 }
 
 // ── Main cleaner ───────────────────────────────────────────────────────────
+
+/**
+ * Collapse runs of source whitespace inside text nodes.
+ *
+ * Word pretty-prints its clipboard HTML, so one sentence that merely *wraps* in
+ * the document window arrives with real newlines inside a single text node. A
+ * browser collapses those to a space when it renders, so this looks like a
+ * no-op — until the editor is styled `white-space: pre-wrap`, which is Quill's
+ * default and common in Tiptap setups. There the newlines become visible line
+ * breaks the author never typed (slab/quill#1979).
+ *
+ * `pre` and `textarea` keep their whitespace: it is meaningful there, and that
+ * is the one place a newline in the source was intended to be a newline.
+ */
+function collapseSourceWhitespace(node: Node): void {
+  for (const child of Array.from(node.childNodes)) {
+    if (child.nodeType === TEXT_NODE) {
+      // Not \s — that also matches U+00A0, and Word leans on &nbsp; for real
+      // spacing. Collapsing those would silently reflow indented text.
+      (child as Text).data = (child as Text).data.replace(/[^\S\u00A0]+/g, ' ');
+    } else if (
+      child.nodeType === ELEMENT_NODE &&
+      !/^(?:PRE|TEXTAREA)$/.test((child as Element).tagName)
+    ) {
+      collapseSourceWhitespace(child);
+    }
+  }
+}
 
 export function cleanWordHtml(
   html: string,
@@ -432,6 +466,8 @@ export function cleanWordHtml(
 
   // Clean up empty paragraphs left by o:p removal
   doc.querySelectorAll('p:empty').forEach((el) => el.remove());
+
+  collapseSourceWhitespace(doc.body);
 
   return doc.body.innerHTML;
 }

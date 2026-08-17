@@ -4,6 +4,45 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.10.0
+
+### Fixed
+
+- **Word's line wrapping no longer becomes real line breaks.** Word pretty-prints
+  the HTML it puts on the clipboard, so a sentence that merely *wraps* in the
+  document window arrives with newlines inside a single text node. A browser
+  collapses those when it renders, which is why this stayed invisible — until
+  the editor is styled `white-space: pre-wrap`, which is Quill's default and
+  common in Tiptap setups. There the author sees line breaks they never typed
+  ([quill#1979](https://github.com/slab/quill/issues/1979)).
+
+  Runs of whitespace in text nodes now collapse to a single space. `&nbsp;` is
+  left alone — Word uses it for genuine spacing, and `\s` would have eaten it —
+  and `<pre>`/`<textarea>` keep their whitespace, being the one place a source
+  newline was meant to be a newline.
+
+- **Server-side use needs only `DOMParser` again.** The documented Next.js setup
+  supplies `globalThis.DOMParser` and nothing else, but the code also read
+  `Node.TEXT_NODE`. Since `Node` is not a global there, every list or math paste
+  threw `ReferenceError: Node is not defined` before any parsing began. The node
+  type constants are now plain values.
+
+## 0.9.0
+
+### Changed
+
+- **Lists become real lists.** Word does not paste a list as a list — every item
+  is a `<p>` carrying `mso-list` styles, with the bullet or number sitting in the
+  text as literal characters. Stripping the styling naively kept `1.` and `2.`
+  frozen into the paragraph, so reordering or inserting an item left the
+  numbering permanently wrong.
+
+  wordpaste now reads those markers before discarding them and rebuilds
+  `<ul>`/`<ol>`: ordered vs bulleted from the marker, the sequence read from the
+  whole run so `i.` `ii.` is roman rather than alpha, nesting by `mso-list`
+  level, and `start` preserved when a list does not begin at 1. `mso-list` also
+  joined `isWordHtml`, which had been missing list-only fragments.
+
 ## 0.8.0
 
 ### Removed

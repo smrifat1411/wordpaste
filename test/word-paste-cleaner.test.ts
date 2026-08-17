@@ -365,3 +365,57 @@ describe('Word lists', () => {
     expect(transformPastedHTML(item('A', '1.'))).toBe('<ol><li>A</li></ol>');
   });
 });
+
+describe('source whitespace', () => {
+  // slab/quill#1979 — Word pretty-prints its clipboard HTML, so a sentence that
+  // only *wraps* in the document window arrives with newlines in the text node.
+  // Invisible in a normal editor; real line breaks under `white-space: pre-wrap`.
+  it('collapses the newlines Word puts inside a wrapped sentence', () => {
+    const out = cleanWordHtml(
+      word('<p>One long sentence that\n  wraps in Word but has\n  no breaks.</p>'),
+    );
+    expect(out).toBe('<p>One long sentence that wraps in Word but has no breaks.</p>');
+  });
+
+  it('keeps &nbsp; runs, which Word uses for real spacing', () => {
+    const out = cleanWordHtml(word('<p>A&nbsp;&nbsp;&nbsp;B</p>'));
+    expect(out).toBe('<p>A&nbsp;&nbsp;&nbsp;B</p>');
+  });
+
+  it('leaves whitespace inside <pre> alone', () => {
+    const out = cleanWordHtml(word('<pre>line one\n    indented</pre>'));
+    expect(out).toBe('<pre>line one\n    indented</pre>');
+  });
+});
+
+describe('no DOM globals beyond DOMParser', () => {
+  // The documented server-side setup (README, Next.js) supplies `DOMParser` and
+  // nothing else. Reading `Node.TEXT_NODE` there threw ReferenceError before any
+  // parsing began, so every list and math paste crashed on the server.
+  const withoutNodeGlobal = (fn: () => void) => {
+    const saved = Reflect.get(globalThis, 'Node');
+    Reflect.deleteProperty(globalThis, 'Node');
+    try {
+      fn();
+    } finally {
+      Reflect.set(globalThis, 'Node', saved);
+    }
+  };
+
+  it('rebuilds a list with no global Node', () => {
+    withoutNodeGlobal(() => {
+      expect(transformPastedHTML(word(item('A', '1.')))).toBe(
+        '<ol><li>A</li></ol>',
+      );
+    });
+  });
+
+  it('converts MathML with no global Node', () => {
+    withoutNodeGlobal(() => {
+      const out = transformPastedHTML(
+        word('<p><math><mfrac><mi>a</mi><mi>b</mi></mfrac></math></p>'),
+      );
+      expect(out).toContain('\\frac{a}{b}');
+    });
+  });
+});

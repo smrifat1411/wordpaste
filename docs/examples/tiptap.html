@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste + Tiptap</title>
+    <title>Paste from Word into Tiptap — clean HTML, editable equations</title>
+    <meta name="description" content="Working Tiptap example: paste from Microsoft Word and the mso junk is stripped while equations stay editable LaTeX instead of images. One HTML file, no build." />
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/examples/tiptap.html" />
+    <meta property="og:title" content="Paste from Word into Tiptap — clean HTML, editable equations" />
+    <meta property="og:description" content="Working Tiptap example: paste from Microsoft Word and the mso junk is stripped while equations stay editable LaTeX instead of images. One HTML file, no build." />
+    <meta property="og:url" content="https://smrifat1411.github.io/wordpaste/examples/tiptap.html" />
+    <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -57,7 +64,7 @@
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.9.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.0';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
 

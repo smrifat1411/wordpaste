@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>wordpaste + ProseMirror</title>
+    <title>Paste from Word into ProseMirror — clean HTML, editable equations</title>
+    <meta name="description" content="Working ProseMirror example: clean Word clipboard HTML in transformPastedHTML and keep OMML equations as editable LaTeX. One HTML file, no build." />
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/examples/prosemirror.html" />
+    <meta property="og:title" content="Paste from Word into ProseMirror — clean HTML, editable equations" />
+    <meta property="og:description" content="Working ProseMirror example: clean Word clipboard HTML in transformPastedHTML and keep OMML equations as editable LaTeX. One HTML file, no build." />
+    <meta property="og:url" content="https://smrifat1411.github.io/wordpaste/examples/prosemirror.html" />
+    <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -61,7 +68,7 @@
       import { EditorView } from 'https://esm.sh/prosemirror-view@1';
       import { schema } from 'https://esm.sh/prosemirror-schema-basic@1';
       import { DOMParser as PMParser } from 'https://esm.sh/prosemirror-model@1';
-      import { transformPastedHTML, cleanWordHtml } from 'https://esm.sh/wordpaste@0.9.0';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.0';
 
       const start = document.createElement('div');
       start.innerHTML = '<p>Paste from Word here…</p>';
