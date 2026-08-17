@@ -169,10 +169,12 @@ anyone else — see [Security](#security).
 **[▶ React](https://smrifat1411.github.io/wordpaste/examples/react.html)** ·
 **[▶ Vue](https://smrifat1411.github.io/wordpaste/examples/vue.html)**
 
-Your framework does not change the code. wordpaste has no UI and no state — it
-is a function. Pick your editor above and put that code inside a component.
+wordpaste has no UI and no state — it is a function, and the line that uses it
+is `editorProps: { transformPastedHTML }` in every framework. Only your editor's
+binding package changes.
 
 ```jsx
+// React — @tiptap/react
 'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -187,6 +189,24 @@ export function WordEditor() {
 
   return <EditorContent editor={editor} />;
 }
+```
+
+```vue
+<!-- Vue 3 — @tiptap/vue-3 -->
+<script setup>
+import { useEditor, EditorContent } from '@tiptap/vue-3';
+import StarterKit from '@tiptap/starter-kit';
+import { transformPastedHTML } from 'wordpaste';
+
+const editor = useEditor({
+  extensions: [StarterKit],
+  editorProps: { transformPastedHTML },
+});
+</script>
+
+<template>
+  <EditorContent :editor="editor" />
+</template>
 ```
 
 **Next.js:** importing wordpaste on the server is safe, but calling it there
