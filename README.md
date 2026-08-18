@@ -324,17 +324,39 @@ never need them.
 
 ### `hasWordMath(html): boolean`
 
-True when the paste carries recoverable equations. Word also puts a screenshot
-of each equation on the clipboard as a file, so if you handle pasted images you
-need to skip it — otherwise you get the equation *and* a picture of it:
+True when the paste carries recoverable equations — use it to decide whether to
+run the OMML conversion.
+
+**Do not use it to skip pasted images.** An earlier version of this page showed
+that, and it loses figures:
+
+```js
+// DON'T — this discards every picture in the paste to avoid one
+onPaste: (editor, files, pasteContent) => {
+  if (pasteContent && hasWordMath(pasteContent)) return;
+  // …your normal image upload
+},
+```
+
+Word puts a screenshot of each equation on the clipboard alongside the real
+figures, and nothing in the clipboard says which file is which:
+[`DataTransfer.files`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/files)
+guarantees no ordering and has no documented relationship to the `text/html`
+flavour. Bailing out of the whole paste is the only way to be sure you skipped
+the equation screenshot — and it is also the way to be sure you lost the
+author's diagrams, silently.
+
+Upload them all instead. An extra picture of an equation is visible and takes
+one click to delete; a missing figure is invisible until someone sits the exam:
 
 ```js
 import { hasWordMath } from 'wordpaste';
 
 FileHandler.configure({
-  onPaste: (editor, files, pasteContent) => {
-    if (pasteContent && hasWordMath(pasteContent)) return;
-    // …your normal image upload
+  // Upload every pasted file. The HTML path still converts the OMML into
+  // editable math, so the equation is not lost either way.
+  onPaste: (editor, files) => {
+    files.forEach((file) => upload(file));
   },
 });
 ```
