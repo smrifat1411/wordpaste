@@ -4,6 +4,27 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.10.1
+
+### Fixed
+
+- **The `hasWordMath` example lost pasted figures.** The documented `onPaste`
+  handler bailed out of the entire paste whenever the content carried math, to
+  dodge Word's rasterised copy of an equation. It discarded *every* picture to
+  avoid one, so a question pasted out of Word arrived with its diagrams missing
+  and nothing said so. Found in a real exam paper where the math-heavy questions
+  had lost their figures.
+
+  Nothing in the clipboard identifies which file is the equation screenshot:
+  [`DataTransfer.files`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/files)
+  documents no ordering and no relationship to the `text/html` flavour. So the
+  README now says to upload every pasted file — an extra picture of an equation
+  is visible and takes one click to remove, while a missing figure is invisible
+  until someone sits the exam.
+
+  Documentation only; no code changed. `hasWordMath` still does its real job,
+  which is deciding whether to run the OMML conversion.
+
 ## 0.10.0
 
 ### Fixed
