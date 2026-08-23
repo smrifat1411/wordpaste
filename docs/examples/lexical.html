@@ -31,6 +31,11 @@
         border-radius: 10px; outline: none;
       }
       #editor p { margin: 0 0 .7em; }
+      button {
+        font: inherit; font-size: .88rem; padding: .35rem .8rem; margin: .9rem .4rem 0 0;
+        border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
+        color: inherit; cursor: pointer;
+      }
       pre {
         margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
         background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
@@ -38,7 +43,7 @@
       }
       .warn { font-size: .9rem; color: #b45309; }
       @media (prefers-color-scheme: dark) {
-        #editor { border-color: #3f3f46; }
+        #editor, button { border-color: #3f3f46; }
         pre { background: #18181b; border-color: #27272a; }
         p.sub { color: #a1a1aa; }
         .warn { color: #fbbf24; }
@@ -52,6 +57,7 @@
     </p>
 
     <div id="editor" contenteditable="true"></div>
+    <button id="sample">Load a Word sample</button>
 
     <p class="warn">
       Note: this uses Lexical's default rich-text nodes, which have no maths
@@ -79,6 +85,16 @@
       registerRichText(editor);
       registerHistory(editor, createEmptyHistoryState(), 300);
 
+      function insertCleanHTML(html) {
+        const clean = transformPastedHTML(html);
+        const dom = new DOMParser().parseFromString(clean, 'text/html');
+
+        editor.update(() => {
+          $getRoot().selectEnd();
+          $insertNodes($generateNodesFromDOM(editor, dom));
+        });
+      }
+
       editor.registerCommand(
         PASTE_COMMAND,
         (event) => {
@@ -86,19 +102,24 @@
           if (!html) return false;
 
           event.preventDefault();
-          const clean = transformPastedHTML(html);
-          const dom = new DOMParser().parseFromString(clean, 'text/html');
-
-          editor.update(() => {
-            $getRoot().selectEnd();
-            $insertNodes($generateNodesFromDOM(editor, dom));
-          });
+          insertCleanHTML(html);
           return true;
         },
         COMMAND_PRIORITY_HIGH,
       );
 
-      document.getElementById('code').textContent = `import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
+      const SAMPLE =
+        '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">' +
+        '<p class=MsoNormal style="text-align:center;font-family:Calibri">' +
+        'Darcy&#8211;Weisbach head loss<o:p></o:p></p>' +
+        '<p class=MsoNormal><m:oMath><m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
+        '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r><m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup>' +
+        '</m:sSup></m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath>' +
+        '<img src="file:///C:/Users/me/clip_image001.png"><o:p></o:p></p></html>';
+
+      document.getElementById('sample').addEventListener('click', () => insertCleanHTML(SAMPLE));
+
+      document.getElementById('code').textContent =`import { PASTE_COMMAND, COMMAND_PRIORITY_HIGH, $getRoot, $insertNodes } from 'lexical';
 import { $generateNodesFromDOM } from '@lexical/html';
 import { transformPastedHTML } from 'wordpaste';
 

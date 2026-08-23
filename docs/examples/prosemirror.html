@@ -36,9 +36,14 @@
         background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
         font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
       }
+      button {
+        font: inherit; font-size: .88rem; padding: .35rem .8rem; margin: .9rem .4rem 0 0;
+        border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
+        color: inherit; cursor: pointer;
+      }
       .warn { font-size: .9rem; color: #b45309; }
       @media (prefers-color-scheme: dark) {
-        #editor { border-color: #3f3f46; }
+        #editor, button { border-color: #3f3f46; }
         pre { background: #18181b; border-color: #27272a; }
         p.sub { color: #a1a1aa; }
         .warn { color: #fbbf24; }
@@ -53,6 +58,7 @@
     </p>
 
     <div id="editor"></div>
+    <button id="sample">Load a Word sample</button>
 
     <p class="warn">
       Note: this uses <code>prosemirror-schema-basic</code>, which has no maths
@@ -73,9 +79,24 @@
       const start = document.createElement('div');
       start.innerHTML = '<p>Paste from Word here…</p>';
 
-      new EditorView(document.getElementById('editor'), {
+      const view = new EditorView(document.getElementById('editor'), {
         state: EditorState.create({ doc: PMParser.fromSchema(schema).parse(start) }),
         transformPastedHTML,
+      });
+
+      const SAMPLE =
+        '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">' +
+        '<p class=MsoNormal style="text-align:center;font-family:Calibri">' +
+        'Darcy&#8211;Weisbach head loss<o:p></o:p></p>' +
+        '<p class=MsoNormal><m:oMath><m:sSub><m:e><m:r>Z</m:r></m:e><m:sub><m:r>A</m:r></m:sub></m:sSub>' +
+        '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r><m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup>' +
+        '</m:sSup></m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath>' +
+        '<img src="file:///C:/Users/me/clip_image001.png"><o:p></o:p></p></html>';
+
+      document.getElementById('sample').addEventListener('click', () => {
+        const div = document.createElement('div');
+        div.innerHTML = transformPastedHTML(SAMPLE);
+        view.updateState(EditorState.create({ doc: PMParser.fromSchema(schema).parse(div) }));
       });
 
       document.getElementById('code').textContent = `import { EditorView } from 'prosemirror-view';
