@@ -4,6 +4,18 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.11.1
+
+Documentation only; no code changed. Published so the npm page shows it.
+
+- `ommlToLatex` moves out of "Advanced" into its own section, "Reading
+  equations from a .docx", with the Node/jsdom setup beside it and a current
+  list of what it handles.
+- Limits no longer says "browser only" and "not a .docx reader" without
+  saying where the real boundary is.
+- `hasWordMath` is cut to the one warning that matters.
+- Install is one block instead of four.
+
 ## 0.11.0
 
 ### Fixed

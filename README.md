@@ -73,7 +73,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.11.0';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.11.1';
 </script>
 ```
 
