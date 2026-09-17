@@ -64,6 +64,42 @@ const ESC: Record<string, string> = {
   $: '\\$',
 };
 
+// <m:accPr><m:chr> holds the accent as a combining codepoint. Word omits the
+// attribute entirely for a circumflex, so \hat doubles as the fallback.
+const ACCENT: Record<string, string> = {
+  '\u0300': 'grave',
+  '\u0301': 'acute',
+  '\u0302': 'hat',
+  '\u0303': 'tilde',
+  '\u0304': 'bar',
+  '\u0305': 'overline',
+  '\u0306': 'breve',
+  '\u0307': 'dot',
+  '\u0308': 'ddot',
+  '\u030C': 'check',
+  '\u20D6': 'overleftarrow',
+  '\u20D7': 'vec',
+};
+
+// Delimiter characters Word stores literally in <m:begChr>/<m:endChr>, which
+// LaTeX will not accept raw after \left and \right. An empty string means
+// "no delimiter this side", which LaTeX spells as a full stop.
+const DELIM: Record<string, string> = {
+  '': '.',
+  '{': '\\{',
+  '}': '\\}',
+  '\u2016': '\\|',
+  '\u230A': '\\lfloor',
+  '\u230B': '\\rfloor',
+  '\u2308': '\\lceil',
+  '\u2309': '\\rceil',
+  '\u27E8': '\\langle',
+  '\u27E9': '\\rangle',
+  '\u3008': '\\langle',
+  '\u3009': '\\rangle',
+};
+const delim = (ch: string): string => DELIM[ch] ?? ch;
+
 function escText(s: string): string {
   let o = '';
   for (const ch of s) o += UNI[ch] ?? ESC[ch] ?? ch;
@@ -118,10 +154,18 @@ function conv(node: Element): string {
         break;
       }
       case 'f': {
-        // fraction
+        // fraction — <m:fPr><m:type> picks the shape. Absent or "bar" is the
+        // horizontal rule; "noBar" is how Word writes a binomial coefficient,
+        // and "lin"/"skw" are written inline with a slash.
         const nu = child(el, 'num'),
           de = child(el, 'den');
-        out += `\\frac{${nu ? conv(nu) : ''}}{${de ? conv(de) : ''}}`;
+        const top = nu ? conv(nu) : '',
+          bot = de ? conv(de) : '';
+        const fPr = child(el, 'fPr');
+        const type = fPr ? attrVal(child(fPr, 'type')) : '';
+        if (type === 'noBar') out += `\\binom{${top}}{${bot}}`;
+        else if (type === 'lin' || type === 'skw') out += `${top}/${bot}`;
+        else out += `\\frac{${top}}{${bot}}`;
         break;
       }
       case 'sSub': {
@@ -157,15 +201,21 @@ function conv(node: Element): string {
         // delimiter (parentheses/brackets/braces)
         const dpr = child(el, 'dPr');
         let beg = '(',
-          end = ')';
+          end = ')',
+          sep = ',';
         if (dpr) {
-          const b = attrVal(child(dpr, 'begChr')),
-            en = attrVal(child(dpr, 'endChr'));
-          if (b) beg = b;
-          if (en) end = en;
+          const bEl = child(dpr, 'begChr'),
+            eEl = child(dpr, 'endChr'),
+            sEl = child(dpr, 'sepChr');
+          // Present-but-empty means "no delimiter on this side" — Word writes
+          // that for the open edge of a cases block. Absent means "default",
+          // which is why these read the element rather than its value.
+          if (bEl) beg = attrVal(bEl);
+          if (eEl) end = attrVal(eEl);
+          if (sEl) sep = attrVal(sEl);
         }
-        const inner = kids(el, 'e').map(conv).join(',');
-        out += `\\left${beg === '{' ? '\\{' : beg} ${inner} \\right${end === '}' ? '\\}' : end}`;
+        const inner = kids(el, 'e').map(conv).join(sep);
+        out += `\\left${delim(beg)} ${inner} \\right${delim(end)}`;
         break;
       }
       case 'nary': {
@@ -199,13 +249,40 @@ function conv(node: Element): string {
         break;
       }
       case 'bar': {
+        // <m:barPr><m:pos val="bot"/> puts the rule under the expression.
         const e = child(el, 'e');
-        out += `\\overline{${e ? conv(e) : ''}}`;
+        const barPr = child(el, 'barPr');
+        const cmd =
+          (barPr ? attrVal(child(barPr, 'pos')) : '') === 'bot'
+            ? 'underline'
+            : 'overline';
+        out += `\\${cmd}{${e ? conv(e) : ''}}`;
         break;
       }
       case 'acc': {
+        // Every accent used to collapse to \hat, which turns a vector into a
+        // circumflex — the wrong symbol in most physics and engineering
+        // documents, and silently so.
         const e = child(el, 'e');
-        out += `\\hat{${e ? conv(e) : ''}}`;
+        const accPr = child(el, 'accPr');
+        const cmd = ACCENT[accPr ? attrVal(child(accPr, 'chr')) : ''] ?? 'hat';
+        out += `\\${cmd}{${e ? conv(e) : ''}}`;
+        break;
+      }
+
+      case 'sPre': {
+        // pre-sub/superscript — an isotope such as {}_{6}^{14}C.
+        const e = child(el, 'e'),
+          sb = child(el, 'sub'),
+          sp = child(el, 'sup');
+        out += `{}${sb ? `_{${conv(sb)}}` : ''}${sp ? `^{${conv(sp)}}` : ''}{${e ? conv(e) : ''}}`;
+        break;
+      }
+
+      case 'eqArr': {
+        // equation array — Word's multi-line aligned block. Without this the
+        // lines run together into one expression.
+        out += `\\begin{aligned} ${kids(el, 'e').map(conv).join(' \\\\ ')} \\end{aligned}`;
         break;
       }
       case 'm': {

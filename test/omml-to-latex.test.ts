@@ -183,4 +183,127 @@ describe('ommlToLatex constructs', () => {
   it('maps unicode maths glyphs KaTeX cannot read raw', () => {
     expect(ommlToLatex(math(run('a×b≥c')))).toBe('a\\times b\\geq c');
   });
+
+  it('acc — the accent character picks the command, not always \hat', () => {
+    const acc = (chr: string) =>
+      ommlToLatex(
+        math(
+          `<m:acc><m:accPr><m:chr m:val="${chr}"/></m:accPr><m:e>${run('v')}</m:e></m:acc>`,
+        ),
+      );
+    // The vector is the case that actually bites: \hat{v} is a different thing.
+    expect(acc('⃗')).toBe('\\vec{v}');
+    expect(acc('̄')).toBe('\\bar{v}');
+    expect(acc('̇')).toBe('\\dot{v}');
+    expect(acc('̈')).toBe('\\ddot{v}');
+    expect(acc('̃')).toBe('\\tilde{v}');
+    expect(acc('̌')).toBe('\\check{v}');
+  });
+
+  it('acc — an unknown or absent accent still falls back to \hat', () => {
+    expect(ommlToLatex(math(`<m:acc><m:e>${run('v')}</m:e></m:acc>`))).toBe(
+      '\\hat{v}',
+    );
+    expect(
+      ommlToLatex(
+        math(
+          `<m:acc><m:accPr><m:chr m:val="⁂"/></m:accPr><m:e>${run('v')}</m:e></m:acc>`,
+        ),
+      ),
+    ).toBe('\\hat{v}');
+  });
+
+  it('f — noBar is a binomial coefficient, not a fraction', () => {
+    expect(
+      ommlToLatex(
+        math(
+          `<m:f><m:fPr><m:type m:val="noBar"/></m:fPr>` +
+            `<m:num>${run('n')}</m:num><m:den>${run('k')}</m:den></m:f>`,
+        ),
+      ),
+    ).toBe('\\binom{n}{k}');
+  });
+
+  it('f — linear and skewed fractions are written with a slash', () => {
+    for (const type of ['lin', 'skw']) {
+      expect(
+        ommlToLatex(
+          math(
+            `<m:f><m:fPr><m:type m:val="${type}"/></m:fPr>` +
+              `<m:num>${run('a')}</m:num><m:den>${run('b')}</m:den></m:f>`,
+          ),
+        ),
+      ).toBe('a/b');
+    }
+  });
+
+  it('bar — pos="bot" underlines instead of overlining', () => {
+    expect(
+      ommlToLatex(
+        math(
+          `<m:bar><m:barPr><m:pos m:val="bot"/></m:barPr><m:e>${run('x')}</m:e></m:bar>`,
+        ),
+      ),
+    ).toBe('\\underline{x}');
+  });
+
+  it('d — norm, floor, ceiling and angle brackets become LaTeX commands', () => {
+    const d = (b: string, e: string) =>
+      ommlToLatex(
+        math(
+          `<m:d><m:dPr><m:begChr m:val="${b}"/><m:endChr m:val="${e}"/></m:dPr>` +
+            `<m:e>${run('x')}</m:e></m:d>`,
+        ),
+      );
+    // Passed through raw, these produce LaTeX that will not compile.
+    expect(d('‖', '‖')).toBe('\\left\\| x \\right\\|');
+    expect(d('⌊', '⌋')).toBe('\\left\\lfloor x \\right\\rfloor');
+    expect(d('⌈', '⌉')).toBe('\\left\\lceil x \\right\\rceil');
+    expect(d('⟨', '⟩')).toBe('\\left\\langle x \\right\\rangle');
+  });
+
+  it('d — an empty delimiter is a full stop, not a stray parenthesis', () => {
+    // Word writes the open side empty for a cases block; defaulting to "("
+    // produced an unbalanced expression.
+    expect(
+      ommlToLatex(
+        math(
+          `<m:d><m:dPr><m:begChr m:val="{"/><m:endChr m:val=""/></m:dPr>` +
+            `<m:e>${run('x')}</m:e></m:d>`,
+        ),
+      ),
+    ).toBe('\\left\\{ x \\right.');
+  });
+
+  it('d — sepChr overrides the comma between arguments', () => {
+    expect(
+      ommlToLatex(
+        math(
+          `<m:d><m:dPr><m:sepChr m:val="|"/></m:dPr>` +
+            `<m:e>${run('a')}</m:e><m:e>${run('b')}</m:e></m:d>`,
+        ),
+      ),
+    ).toBe('\\left( a|b \\right)');
+  });
+
+  it('sPre — pre-sub/superscript, as in an isotope', () => {
+    expect(
+      ommlToLatex(
+        math(
+          `<m:sPre><m:sub>${run('6')}</m:sub><m:sup>${run('14')}</m:sup>` +
+            `<m:e>${run('C')}</m:e></m:sPre>`,
+        ),
+      ),
+    ).toBe('{}_{6}^{14}{C}');
+  });
+
+  it('eqArr — an equation array keeps its line breaks', () => {
+    expect(
+      ommlToLatex(
+        math(
+          `<m:eqArr><m:e>${run('a=b')}</m:e><m:e>${run('c=d')}</m:e></m:eqArr>`,
+        ),
+      ),
+    ).toBe('\\begin{aligned} a=b \\\\ c=d \\end{aligned}');
+  });
 });
