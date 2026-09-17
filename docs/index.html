@@ -235,6 +235,9 @@
       }
       #example-frame { display: block; width: 100%; height: 560px; border: 0; }
       .example-open { margin: 0.6rem 0 0; font-size: 0.82rem; }
+      .example-direct { margin: 0.35rem 0 0; font-size: 0.82rem; color: var(--muted); }
+      .example-direct a { color: var(--muted); }
+      .example-direct a:hover { color: var(--accent); }
       .example-open a { color: var(--muted); }
       .example-open a:hover { color: var(--accent); }
 
@@ -350,6 +353,21 @@ new Editor({
           <iframe id="example-frame" title="Runnable example preview" src="./examples/tiptap.html" loading="lazy"></iframe>
         </div>
         <p class="example-open"><a id="example-open-link" href="./examples/tiptap.html" target="_blank" rel="noopener">Open this example in its own tab ↗</a></p>
+        <!--
+          The tabs above are buttons, so a crawler has no link to follow and
+          every example except Tiptap was an orphan page — in the sitemap, but
+          unreachable and therefore unindexed. These are plain anchors on
+          purpose; they are also the quickest way for a reader to jump straight
+          to the one they use.
+        -->
+        <p class="example-direct">Open an example directly:
+          <a href="./examples/tiptap.html">Tiptap</a> ·
+          <a href="./examples/react.html">React</a> ·
+          <a href="./examples/vue.html">Vue</a> ·
+          <a href="./examples/prosemirror.html">ProseMirror</a> ·
+          <a href="./examples/lexical.html">Lexical</a> ·
+          <a href="./examples/vanilla.html">Vanilla JavaScript</a>
+        </p>
       </section>
 
       <section class="block faq">
@@ -379,7 +397,10 @@ new Editor({
           <em>and</em> as real <code>&lt;m:oMath&gt;</code> markup. Editors take
           the picture, so nobody can edit the maths again. wordpaste reads the
           markup instead and converts OMML — and LibreOffice's MathML — to
-          LaTeX you can still change.
+          LaTeX you can still change. If you are working with
+          <code>.docx</code> files rather than a paste, the converter is
+          available on its own:
+          <a href="./omml-to-latex.html">OMML to LaTeX</a>.
         </p>
 
         <h3>Why do Word lists paste as plain paragraphs?</h3>
@@ -427,6 +448,7 @@ new Editor({
         HTML with real <code>mso-</code> attributes and real
         <code>&lt;m:oMath&gt;</code> markup. —
         <a href="https://github.com/smrifat1411/wordpaste" target="_blank" rel="noopener">MIT</a>
+        · <a href="./omml-to-latex.html">OMML to LaTeX converter</a>
       </footer>
     </main>
 
@@ -435,7 +457,7 @@ new Editor({
       import StarterKit from 'https://esm.sh/@tiptap/starter-kit@3';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@3';
       import * as mathMod from 'https://esm.sh/@tiptap/extension-mathematics@3';
-      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.1';
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.11.0';
 
       const Mathematics = mathMod.Mathematics ?? mathMod.default;
       // Tiptap drops text-align unless a schema knows about it.

@@ -83,7 +83,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.10.1';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.11.0';
 </script>
 ```
 
@@ -373,6 +373,11 @@ FileHandler.configure({
 ```
 
 ### `ommlToLatex(omml): string`
+
+> There is a standalone page for this one — explanation, a live converter and
+> the full construct table:
+> **[OMML to LaTeX](https://smrifat1411.github.io/wordpaste/omml-to-latex.html)**.
+
 
 Converts Word's equation markup to a LaTeX string on its own. This is for
 reading a `.docx` **file**, not the clipboard —

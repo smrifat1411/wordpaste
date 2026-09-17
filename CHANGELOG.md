@@ -4,6 +4,55 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.11.0
+
+### Fixed
+
+- **Every equation accent came out as `\hat`.** `<m:acc>` ignored
+  `<m:accPr><m:chr>`, so a vector `a⃗` rendered as `â`, a time derivative
+  `ẋ` as `x̂`, and so on. The accent character now selects the command —
+  `\vec`, `\bar`, `\dot`, `\ddot`, `\tilde`, `\check`, `\breve`,
+  `\acute`, `\grave`, `\overline`, `\overleftarrow` — with `\hat` kept as
+  the fallback for an absent or unrecognised one. This is the fix most likely
+  to change output you already have, and it fails silently in the old
+  behaviour: the equation still renders, it is simply the wrong symbol.
+
+- **Binomial coefficients rendered as fractions.** `<m:f>` ignored
+  `<m:fPr><m:type>`. `noBar` — how Word writes `C(n, k)` — is now `\binom`,
+  and `lin` / `skw` are written inline with a slash.
+
+- **Some delimiters produced LaTeX that would not compile.** `<m:begChr>` and
+  `<m:endChr>` were passed to `\left` and `\right` raw, so `‖ ⌊ ⌋ ⌈ ⌉ ⟨ ⟩`
+  went through as literal characters. They are now mapped to `\|`,
+  `\lfloor`, `\rceil`, `\langle` and the rest.
+
+- **An empty delimiter became a stray parenthesis.** Word writes the open side
+  empty for a cases block. That was indistinguishable from "absent" and fell
+  back to `(`, leaving the expression unbalanced. An empty side is now
+  `\left.` / `\right.`.
+
+- **`<m:sepChr>` was ignored**, so delimiter arguments were always joined with
+  a comma.
+
+- **`<m:barPr><m:pos val="bot"/>` is an underline**, not an overline.
+
+### Added
+
+- `<m:sPre>` — pre-sub/superscript, as in an isotope `¹⁴₆C`. It previously
+  fell through and emitted its parts in the wrong order.
+- `<m:eqArr>` — Word's multi-line equation array, which previously ran
+  together into a single line. Now `\begin{aligned}`.
+- A standalone page for the converter:
+  [OMML to LaTeX](https://smrifat1411.github.io/wordpaste/omml-to-latex.html),
+  with a live converter and the full construct table.
+
+### Changed
+
+- Dev only: vitest 3 → 5, clearing GHSA-82fw-gwwq-j7x9. The published package
+  has no runtime dependencies and was never affected. CI now runs unit tests on
+  node 22 and 24 (vitest 5 requires >= 22.12) and smoke-tests the real tarball
+  on 20, 22 and 24 — broader coverage of the published artifact than before.
+
 ## 0.10.1
 
 ### Fixed
