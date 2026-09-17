@@ -317,16 +317,11 @@ import { JSDOM } from 'jsdom';
 globalThis.DOMParser = new JSDOM().window.DOMParser;
 ```
 
-It handles fractions (including `\binom` for Word's no-bar type), sub- and
-superscripts, pre-scripts (isotopes), radicals, delimiters (norm, floor,
-ceiling, angle brackets, empty sides), ∑ ∫ ∏ with limits, named functions,
-limits, over- and underlines, accents (`\vec`, `\bar`, `\dot`, `\hat` …),
-matrices and multi-line equation arrays, plus the unicode maths glyphs Word
-emits as plain text.
-
-There is a
-**[standalone page](https://smrifat1411.github.io/wordpaste/omml-to-latex.html)**
-with a live converter and the full construct table.
+It handles fractions (including `\binom`), sub-, super- and pre-scripts,
+radicals, delimiters, ∑ ∫ ∏, functions, limits, over/underlines, accents
+(`\vec`, `\bar`, `\dot`, `\hat` …), matrices and equation arrays. The full
+construct table, with a live converter, is on the
+**[OMML to LaTeX page](https://smrifat1411.github.io/wordpaste/omml-to-latex.html)**.
 
 ## Security
 
@@ -368,42 +363,15 @@ never need it.
 
 ### `hasWordMath(html): boolean`
 
-True when the paste carries recoverable equations — use it to decide whether to
-run the OMML conversion.
+True when the paste carries recoverable equations. Use it to decide whether
+the OMML conversion is worth running.
 
-**Do not use it to skip pasted images.** An earlier version of this page showed
-that, and it loses figures:
-
-```js
-// DON'T — this discards every picture in the paste to avoid one
-onPaste: (editor, files, pasteContent) => {
-  if (pasteContent && hasWordMath(pasteContent)) return;
-  // …your normal image upload
-},
-```
-
-Word puts a screenshot of each equation on the clipboard alongside the real
-figures, and nothing in the clipboard says which file is which:
-[`DataTransfer.files`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/files)
-guarantees no ordering and has no documented relationship to the `text/html`
-flavour. Bailing out of the whole paste is the only way to be sure you skipped
-the equation screenshot — and it is also the way to be sure you lost the
-author's diagrams, silently.
-
-Upload them all instead. An extra picture of an equation is visible and takes
-one click to delete; a missing figure is invisible until someone sits the exam:
-
-```js
-import { hasWordMath } from 'wordpaste';
-
-FileHandler.configure({
-  // Upload every pasted file. The HTML path still converts the OMML into
-  // editable math, so the equation is not lost either way.
-  onPaste: (editor, files) => {
-    files.forEach((file) => upload(file));
-  },
-});
-```
+**Do not use it to skip pasted images.** Word puts a screenshot of each
+equation on the clipboard next to the real figures, and nothing in
+`clipboardData.files` says which is which — so bailing out of a paste to avoid
+the screenshot silently drops the author's diagrams as well. Upload every
+pasted file: an extra picture of an equation is one click to delete, a missing
+figure is invisible until someone sits the exam.
 
 ## Why this exists
 
