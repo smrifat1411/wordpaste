@@ -55,6 +55,7 @@ Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
 - [Use it](#use-it) — [Tiptap](#tiptap) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Vanilla JavaScript](#vanilla-javascript) · [React, Next.js, Vue](#react-nextjs-vue)
 - [Showing the maths](#showing-the-maths) — **read this if equations look wrong**
 - [What it handles](#what-it-handles)
+- [Reading equations from a .docx](#reading-equations-from-a-docx) — `ommlToLatex` on its own, and Node
 - [Security](#security)
 - [Limits](#limits)
 - [Advanced](#advanced)
@@ -64,18 +65,7 @@ Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
 
 ```bash
 npm install wordpaste
-```
-
-```bash
-pnpm add wordpaste
-```
-
-```bash
-yarn add wordpaste
-```
-
-```bash
-bun add wordpaste
+# pnpm add wordpaste / yarn add wordpaste / bun add wordpaste
 ```
 
 **No build step?** Import it straight from a CDN. Pin the version — an unpinned
@@ -298,6 +288,46 @@ Its equations cannot be recovered by anyone: Docs puts them on the clipboard as
 images already. Word is the unusual one — it sends the picture *and* the real
 maths, which is the gap this package exploits.
 
+## Reading equations from a `.docx`
+
+Everything above is about the clipboard. But the same OMML sits inside every
+`.docx`, in `word/document.xml`, and many tools that read a `.docx` —
+[mammoth](https://github.com/mwilliamson/mammoth.js), docx-to-Markdown
+converters, document ingestion for RAG — drop the equations on the floor.
+`ommlToLatex` is the converter on its own, for that job.
+
+```js
+import { ommlToLatex } from 'wordpaste';
+
+ommlToLatex(
+  '<m:oMath><m:f><m:num><m:r>a</m:r></m:num><m:den><m:r>b</m:r></m:den></m:f></m:oMath>',
+);
+// '\\frac{a}{b}'
+```
+
+String in, string out. It returns `''` when the fragment cannot be parsed, so it
+never throws mid-document. It reads OMML only — LibreOffice's MathML is handled
+by `transformPastedHTML`, not here.
+
+**On Node** there is no `DOMParser`. Supply one before the first call; that is
+the only setup:
+
+```js
+import { JSDOM } from 'jsdom';
+globalThis.DOMParser = new JSDOM().window.DOMParser;
+```
+
+It handles fractions (including `\binom` for Word's no-bar type), sub- and
+superscripts, pre-scripts (isotopes), radicals, delimiters (norm, floor,
+ceiling, angle brackets, empty sides), ∑ ∫ ∏ with limits, named functions,
+limits, over- and underlines, accents (`\vec`, `\bar`, `\dot`, `\hat` …),
+matrices and multi-line equation arrays, plus the unicode maths glyphs Word
+emits as plain text.
+
+There is a
+**[standalone page](https://smrifat1411.github.io/wordpaste/omml-to-latex.html)**
+with a live converter and the full construct table.
+
 ## Security
 
 **wordpaste is not a sanitiser.** It removes formatting junk, not dangerous
@@ -325,13 +355,16 @@ See [SECURITY.md](./SECURITY.md).
 - **Images on the writer's disk are dropped.** Word points at `file:///C:/…`,
   a dead link on the web. `https:` and `data:` images are kept. The real bytes
   arrive separately as `clipboardData.files` — uploading those is your app's job.
-- **Browser only**, unless you supply jsdom as shown under Next.js.
-- **Not a `.docx` reader.** This handles what an editor puts on the clipboard.
+- **Browser first.** It uses the native `DOMParser`; on Node, supply one from
+  jsdom as shown under [Reading equations from a .docx](#reading-equations-from-a-docx).
+- **Not a `.docx` reader.** `transformPastedHTML` handles what an editor puts
+  on the clipboard. To get equations out of a file, unzip it yourself and hand
+  the `<m:oMath>` fragments to `ommlToLatex`.
 
 ## Advanced
 
-Two extra exports for cases the main function does not cover. You will probably
-never need them.
+One extra export for a case the main function does not cover. You will probably
+never need it.
 
 ### `hasWordMath(html): boolean`
 
@@ -371,22 +404,6 @@ FileHandler.configure({
   },
 });
 ```
-
-### `ommlToLatex(omml): string`
-
-> There is a standalone page for this one — explanation, a live converter and
-> the full construct table:
-> **[OMML to LaTeX](https://smrifat1411.github.io/wordpaste/omml-to-latex.html)**.
-
-
-Converts Word's equation markup to a LaTeX string on its own. This is for
-reading a `.docx` **file**, not the clipboard —
-[`mammoth`](https://github.com/mwilliamson/mammoth.js) has no equation support,
-so this fills that gap.
-
-Handles fractions, sub/superscripts, radicals, delimiters, n-ary operators
-(∑ ∫ ∏), functions, limits, overline, accent and matrices, plus the unicode
-maths glyphs Word emits as plain text.
 
 ## Why this exists
 
