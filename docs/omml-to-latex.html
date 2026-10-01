@@ -6,7 +6,7 @@
     <title>OMML to LaTeX: convert Word equations online or in JavaScript</title>
     <meta
       name="description"
-      content="Convert Microsoft Word's OMML equations to LaTeX in the browser. Paste OMML from a .docx or the Word clipboard and get LaTeX out. Free, MIT, zero dependencies, 3.6 kB."
+      content="Convert Microsoft Word's OMML equations to LaTeX in the browser. Paste OMML from a .docx or the Word clipboard and get LaTeX out. Free, MIT, zero dependencies, 1.7 kB on its own."
     />
     <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/omml-to-latex.html" />
     <meta property="og:type" content="website" />
@@ -116,7 +116,7 @@
       <div class="badges">
         <span class="badge">MIT</span>
         <span class="badge">zero dependencies</span>
-        <span class="badge">3.6 kB gzipped</span>
+        <span class="badge">1.7 kB gzipped on its own</span>
         <span class="badge">runs in the browser</span>
       </div>
 
@@ -234,7 +234,7 @@ const latex = ommlToLatex('&lt;m:oMath&gt;…&lt;/m:oMath&gt;');
     </div>
 
     <script type="module">
-      import { ommlToLatex } from 'https://esm.sh/wordpaste@0.12.0';
+      import { ommlToLatex } from 'https://esm.sh/wordpaste@0.12.1';
       import katex from 'https://esm.sh/katex@0.16.11';
 
       const M = (inner) => `<m:oMath>${inner}</m:oMath>`;

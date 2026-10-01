@@ -1,0 +1,21 @@
+Real clipboard HTML captured from Office applications, copied here as test
+fixtures. Each file keeps its source's licence; none of them ships in the npm
+package (package.json "files" is dist only).
+
+word15-mac-lists.html
+  Microsoft Word 15 for Mac. From facebook/lexical,
+  dev-examples/dom-import/src/fixtures/word.html.
+  MIT License. Copyright (c) Meta Platforms, Inc. and affiliates.
+
+word12-win-table.html, word12-win-lists.html
+  Microsoft Word 12 (2007) on Windows, captured through Firefox. From
+  tinymce/tinymce at tag 6.8.5, modules/tinymce/src/core/test/ts/module/test/
+  PasteStrings.ts (constants `table` and `wordList1`).
+  MIT License. Copyright (c) 2022 Ephox Corporation DBA Tiny Technologies, Inc.
+
+The MIT License text applies to each: permission is hereby granted, free of
+charge, to any person obtaining a copy of this software and associated
+documentation files, to deal in the Software without restriction, subject to
+the above copyright notices and this permission notice being included in all
+copies or substantial portions of the Software. The Software is provided "as
+is", without warranty of any kind.

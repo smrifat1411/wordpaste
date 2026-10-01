@@ -137,6 +137,24 @@ describe('cleanWordHtml', () => {
     ).toBe('<img src="https://cdn/real.png">');
   });
 
+  it("keeps the <img> Word hides in its !vml block, whatever the src scheme", () => {
+    // Word for Windows: VML shape for Word, plain <img> for everyone else.
+    const html =
+      '<html xmlns:o="urn:schemas-microsoft-com:office:office"><body><p>' +
+      '<!--[if gte vml 1]><v:shape id="Picture_x0020_2" o:spid="_x0000_i1025">' +
+      '<v:imagedata src="file:///C:/x.png"/></v:shape><![endif]-->' +
+      '<![if !vml]><img width=372 height=248 src="data:image/png;base64,AAAA" v:shapes="Picture_x0020_2"><![endif]>' +
+      '</p></body></html>';
+    expect(cleanWordHtml(html)).toBe(
+      '<p><img width="372" height="248" src="data:image/png;base64,AAAA"></p>',
+    );
+  });
+
+  it('keeps blob: images, which is how Safari delivers Word pictures', () => {
+    const html = word('<p><img src="blob:https://app.test/1234"><img src="file:///C:/x.png"></p>');
+    expect(cleanWordHtml(html)).toBe('<p><img src="blob:https://app.test/1234"></p>');
+  });
+
   it('escapes a LaTeX "<" so the fallback text cannot open a bogus tag', () => {
     // Assert the parsed result, not the raw string: HTML attribute
     // serialisation does not escape "<", so a DOM round-trip rewrites it back.

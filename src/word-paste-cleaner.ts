@@ -483,6 +483,10 @@ export function cleanWordHtml(
       /<!\[if\s*!support(?:Foot|End)notes\s*\]>([\s\S]*?)<!\[endif\]>/gi,
       '<sup>$1</sup>',
     )
+    // Word on Windows puts every picture in one of these: the VML shape for
+    // Word itself in a conditional comment, the plain <img> for everyone else
+    // in this block. Dropping it dropped every image, whatever its src.
+    .replace(/<!\[if\s*!vml\s*\]>([\s\S]*?)<!\[endif\]>/gi, '$1')
     .replace(/<!\[if[^\]]*\]>[\s\S]*?<!\[endif\]>/gi, '');
 
   // 5. DOMParser structural cleanup.
@@ -527,8 +531,11 @@ export function cleanWordHtml(
 
   // Word references pasted images by local path (file:///…) — dead links in a
   // browser. Drop them; genuine images arrive via the upload path instead.
+  // `blob:` stays: Safari rewrites Word's local images to blob URLs the page
+  // can fetch, and that is the only way a Mac paste keeps its pictures.
   doc.querySelectorAll('img').forEach((el) => {
-    if (!/^(https?:|data:)/i.test(el.getAttribute('src') ?? '')) el.remove();
+    if (!/^(https?:|data:|blob:)/i.test(el.getAttribute('src') ?? '')) el.remove();
+    else el.removeAttribute('v:shapes'); // pointed at the VML shape, now gone
   });
 
   // Clean up empty paragraphs left by o:p removal

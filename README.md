@@ -45,7 +45,7 @@ Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
 
 - **Equations survive** as editable LaTeX instead of screenshots
 - **Lists become real lists**, nested, numbered by the browser again
-- **3.6 kB gzipped**, zero dependencies, types included
+- **4.3 kB gzipped**, zero dependencies, types included
 - **One line** to clean in any editor; equations render natively in Tiptap,
   elsewhere with a small math node of your own
 - JavaScript and TypeScript, no framework
@@ -74,7 +74,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.12.0';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.12.1';
 </script>
 ```
 

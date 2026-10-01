@@ -4,6 +4,26 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.12.1
+
+### Fixed
+
+- **Every image pasted from Word for Windows was deleted.** Word wraps each
+  `<img>` in `<![if !vml]>…<![endif]>` and the cleaner dropped that block
+  whole, so even a web or data image never survived. The block is unwrapped
+  now. `file:///` images are still dropped, as documented.
+- **`blob:` images are kept.** Safari rewrites Word's local images to blob
+  URLs the page can fetch; they were being removed with the dead `file:///`
+  ones.
+
+### Docs
+
+- The size claim was stale. `transformPastedHTML` is 4.3 kB minified and
+  gzipped (3.9 kB at 0.11.2; the README still said 3.6). The number is now
+  the measured one, and `ommlToLatex` on its own is 1.7 kB.
+- Real clipboard dumps from Word 15 for Mac and Word 2007 for Windows live in
+  `test/fixtures/` (MIT sources, see the NOTICE there) and back the tests.
+
 ## 0.12.0
 
 ### Fixed
