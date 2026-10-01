@@ -4,6 +4,15 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.11.2
+
+Metadata only; no code changed.
+
+- The npm description now names every source the cleaner handles (Microsoft
+  Word, LibreOffice Writer, Google Docs, Outlook, Excel) instead of only
+  Microsoft Word. That line is what npm search shows, and it undersold the
+  package.
+
 ## 0.11.1
 
 Documentation only; no code changed. Published so the npm page shows it.
