@@ -82,6 +82,15 @@ for (const file of ['README.md', ...walk('docs').filter((f) => f.endsWith('.html
   }
 }
 
+// Every indexable page must be in the sitemap — JS-only navigation orphaned five pages once.
+const sitemap = readFileSync('docs/sitemap.xml', 'utf8');
+for (const file of walk('docs').filter((f) => f.endsWith('.html'))) {
+  const url = file.replace(/^docs\//, '').replace(/^index\.html$/, '');
+  if (!readFileSync(file, 'utf8').includes('name="robots" content="noindex"') && !sitemap.includes(`/wordpaste/${url}</loc>`)) {
+    fails.push(`${file} is indexable but not in docs/sitemap.xml`);
+  }
+}
+
 for (const manager of ['npm install wordpaste', 'pnpm add wordpaste', 'yarn add wordpaste', 'bun add wordpaste']) {
   if (!readme.includes(manager)) fails.push(`README is missing the install line: ${manager}`);
 }

@@ -1,37 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Submit once at https://search.google.com/search-console — GitHub Pages project
      sites cannot serve a root robots.txt, so this is how crawlers find the pages. -->
+<!-- ponytail: lastmod is hand-maintained; bump it in the same commit that edits a page. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/omml-to-latex.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/tiptap.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/prosemirror.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/lexical.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/react.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/vue.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smrifat1411.github.io/wordpaste/examples/vanilla.html</loc>
+    <lastmod>2026-10-01</lastmod>
     <priority>0.8</priority>
   </url>
 </urlset>
