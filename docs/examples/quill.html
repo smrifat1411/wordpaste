@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paste from Word into Quill — clean HTML, equations as formulas</title>
+    <meta name="description" content="Remove Microsoft Word formatting from a paste into Quill 2 by subclassing its clipboard module. Word equations land in Quill's own formula format, rendered by KaTeX." />
+    <link rel="canonical" href="https://smrifat1411.github.io/wordpaste/examples/quill.html" />
+    <meta property="og:title" content="Paste from Word into Quill — clean HTML, equations as formulas" />
+    <meta property="og:description" content="Remove Microsoft Word formatting from a paste into Quill 2 by subclassing its clipboard module. Word equations land in Quill's own formula format, rendered by KaTeX." />
+    <meta property="og:url" content="https://smrifat1411.github.io/wordpaste/examples/quill.html" />
+    <meta property="og:image" content="https://smrifat1411.github.io/wordpaste/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+        font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+      p.sub { margin: 0 0 1.25rem; color: #71717a; }
+      a { color: #059669; }
+      #editor { min-height: 180px; font-size: 15px; }
+      .ql-toolbar.ql-snow, .ql-container.ql-snow { border-color: #d4d4d8; }
+      .ql-toolbar.ql-snow { border-radius: 10px 10px 0 0; }
+      .ql-container.ql-snow { border-radius: 0 0 10px 10px; }
+      button#sample {
+        font: inherit; font-size: .88rem; padding: .35rem .8rem; margin: .9rem .4rem 0 0;
+        border: 1px solid #d4d4d8; border-radius: 7px; background: transparent;
+        color: inherit; cursor: pointer;
+      }
+      pre {
+        margin-top: 1.75rem; padding: 1rem; overflow-x: auto;
+        background: #fafafa; border: 1px solid #e4e4e7; border-radius: 10px;
+        font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        .ql-toolbar.ql-snow, .ql-container.ql-snow, button#sample { border-color: #3f3f46; }
+        .ql-snow .ql-stroke { stroke: #d4d4d8; }
+        .ql-snow .ql-fill { fill: #d4d4d8; }
+        .ql-snow .ql-picker { color: #d4d4d8; }
+        pre { background: #18181b; border-color: #27272a; }
+        p.sub { color: #a1a1aa; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Paste from Word into Quill</h1>
+    <p class="sub">
+      Quill 2 with a subclassed clipboard. Copy from Word and paste below, or load a sample.
+      <a href="../">Back to the playground</a>
+    </p>
+
+    <div id="editor"></div>
+    <button id="sample">Load a Word sample</button>
+
+    <pre id="code"></pre>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+      integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script type="module">
+      import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.12.0';
+
+      const Clipboard = Quill.import('modules/clipboard');
+      const Delta = Quill.import('delta');
+
+      // Quill has no paste prop. Its clipboard module hands onPaste the raw
+      // clipboard HTML, so clean it there before Quill converts it.
+      class WordClipboard extends Clipboard {
+        onPaste(range, { html, text }) {
+          super.onPaste(range, { html: html && transformPastedHTML(html), text });
+        }
+      }
+      Quill.register('modules/clipboard', WordClipboard, true);
+
+      const quill = new Quill('#editor', {
+        theme: 'snow',
+        placeholder: 'Paste from Word here…',
+        modules: {
+          toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['formula', 'clean']],
+          clipboard: {
+            // The equation span becomes Quill's own formula embed, which KaTeX renders.
+            matchers: [['span[data-latex]', (node) => new Delta().insert({ formula: node.dataset.latex })]],
+          },
+        },
+      });
+
+      const SAMPLE =
+        '<html xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:o="urn:schemas-microsoft-com:office:office">' +
+        '<p class=MsoNormal style="mso-bidi-font-size:11.0pt;font-family:Calibri;color:#1F3864">Darcy&#8211;Weisbach head loss<o:p></o:p></p>' +
+        '<p class=MsoNormal><m:oMath><m:sSub><m:e><m:r>h</m:r></m:e><m:sub><m:r>f</m:r></m:sub></m:sSub>' +
+        '<m:r>=f</m:r><m:f><m:num><m:r>L</m:r><m:sSup><m:e><m:r>V</m:r></m:e><m:sup><m:r>2</m:r></m:sup>' +
+        '</m:sSup></m:num><m:den><m:r>2gD</m:r></m:den></m:f></m:oMath><o:p></o:p></p>' +
+        '<p class=MsoListParagraphCxSpFirst style="mso-list:l0 level1 lfo1"><![if !supportLists]><span style="mso-list:Ignore">1.<span style="font:7.0pt Times New Roman">&nbsp;&nbsp;</span></span><![endif]>Measure the pipe<o:p></o:p></p>' +
+        '<p class=MsoListParagraphCxSpLast style="mso-list:l0 level1 lfo1"><![if !supportLists]><span style="mso-list:Ignore">2.<span style="font:7.0pt Times New Roman">&nbsp;&nbsp;</span></span><![endif]>Read the chart<o:p></o:p></p></html>';
+
+      document.getElementById('sample').addEventListener('click', () => {
+        quill.setContents(quill.clipboard.convert({ html: transformPastedHTML(SAMPLE) }));
+      });
+
+      document.getElementById('code').textContent = `import Quill from 'quill';
+import { transformPastedHTML } from 'wordpaste';
+
+const Clipboard = Quill.import('modules/clipboard');
+const Delta = Quill.import('delta');
+
+class WordClipboard extends Clipboard {
+  onPaste(range, { html, text }) {
+    super.onPaste(range, { html: html && transformPastedHTML(html), text });
+  }
+}
+Quill.register('modules/clipboard', WordClipboard, true);
+
+new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    clipboard: {
+      matchers: [['span[data-latex]', (node) => new Delta().insert({ formula: node.dataset.latex })]],
+    },
+  },
+});`;
+    </script>
+  </body>
+</html>

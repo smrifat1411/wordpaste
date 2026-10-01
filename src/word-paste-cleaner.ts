@@ -51,8 +51,10 @@ export function isWordHtml(html: string): boolean {
 
 /**
  * True when the paste carries recoverable math — OMML, Word's msEquation
- * fallback, or bare MathML. Use it to skip the rasterized image Word also puts
- * on the clipboard, and to catch LibreOffice, which has no `mso-` markers.
+ * fallback, or bare MathML. Use it to decide whether the conversion is worth
+ * running, and to catch LibreOffice, which has no `mso-` markers. Do not use
+ * it to skip pasted images: the rasterized equation and the author's real
+ * figures arrive in the same `clipboardData.files` list, indistinguishable.
  */
 export function hasWordMath(html: string): boolean {
   return /<m:oMath|\[if gte msEquation|<math[\s>]/i.test(html);
@@ -185,6 +187,8 @@ const STYLE_AS_TAG: Array<[RegExp, string]> = [
   [/font-style\s*:\s*italic/i, 'em'],
   [/text-decoration[\w-]*\s*:[^;]*underline/i, 'u'],
   [/text-decoration[\w-]*\s*:[^;]*line-through/i, 's'],
+  [/vertical-align\s*:\s*super/i, 'sup'],
+  [/vertical-align\s*:\s*sub/i, 'sub'],
 ];
 
 /**
@@ -259,8 +263,30 @@ function readListItem(el: Element): ListRunItem & { listId: string } | null {
  *  trailing punctuation — 'o' is a Courier bullet, not the letter. */
 function parseMarker(marker: string): { ordered: boolean; body?: string } {
   const m = marker.replace(/[\s ]+/g, '');
+  // Legal numbering ("1.1.", "2.3.1"): ordered, and the last segment is the
+  // counter at this level — the levels above it are already in `mso-list`.
+  const legal = /^(\d+\.)+(\d+)\.?$/.exec(m);
+  if (legal) return { ordered: true, body: legal[2]! };
   if (!/^[([]?[0-9A-Za-z]+[.)\]]$/.test(m)) return { ordered: false };
   return { ordered: true, body: m.replace(/^[([]/, '').replace(/[.)\]]$/, '') };
+}
+
+/** "a" → 1, "c" → 3, "aa" → 27: Word continues past z with doubled letters. */
+function alphaIndex(body: string): number {
+  const b = body.toLowerCase();
+  return (b.length - 1) * 26 + (b.charCodeAt(0) - 96);
+}
+
+function romanValue(body: string): number {
+  const v: Record<string, number> = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
+  const b = body.toLowerCase();
+  let total = 0;
+  for (let k = 0; k < b.length; k++) {
+    const cur = v[b[k]!]!;
+    const next = v[b[k + 1]!] ?? 0;
+    total += cur < next ? -cur : cur;
+  }
+  return total;
 }
 
 /**
@@ -275,14 +301,16 @@ function readListShape(markers: string[]): ListShape {
   const every = (re: RegExp) => bodies.every((b) => re.test(b));
   const multi = bodies.some((b) => b.length > 1);
 
-  if (every(/^\d+$/)) {
-    const start = Number(bodies[0]);
-    return { ordered: true, start: start > 1 ? start : undefined };
-  }
-  if (every(/^[ivxlcdm]+$/) && multi) return { ordered: true, type: 'i' };
-  if (every(/^[IVXLCDM]+$/) && multi) return { ordered: true, type: 'I' };
-  if (every(/^[a-z]+$/)) return { ordered: true, type: 'a' };
-  if (every(/^[A-Z]+$/)) return { ordered: true, type: 'A' };
+  const from = (n: number) => (n > 1 ? n : undefined);
+  if (every(/^\d+$/)) return { ordered: true, start: from(Number(bodies[0])) };
+  if (every(/^[ivxlcdm]+$/) && multi)
+    return { ordered: true, type: 'i', start: from(romanValue(bodies[0]!)) };
+  if (every(/^[IVXLCDM]+$/) && multi)
+    return { ordered: true, type: 'I', start: from(romanValue(bodies[0]!)) };
+  if (every(/^[a-z]+$/))
+    return { ordered: true, type: 'a', start: from(alphaIndex(bodies[0]!)) };
+  if (every(/^[A-Z]+$/))
+    return { ordered: true, type: 'A', start: from(alphaIndex(bodies[0]!)) };
   return { ordered: true };
 }
 
@@ -338,9 +366,22 @@ function buildList(doc: Document, run: ListRunItem[]): Element {
   return root;
 }
 
-/** Replace every run of consecutive Word list paragraphs with a real list. */
+/**
+ * Replace every run of consecutive Word list paragraphs with a real list.
+ * Scans every block container, not just <body>: Outlook wraps the message in
+ * <div class=WordSection1>, and a list inside a table cell is a child of the
+ * <td>. Either way the items are never direct children of <body>.
+ */
 function rebuildWordLists(doc: Document): void {
-  const blocks = Array.from(doc.body.children);
+  const containers = [
+    doc.body,
+    ...Array.from(doc.body.querySelectorAll('div, td, th, blockquote')),
+  ];
+  containers.forEach((c) => rebuildListsIn(doc, c));
+}
+
+function rebuildListsIn(doc: Document, container: Element): void {
+  const blocks = Array.from(container.children);
   let i = 0;
 
   while (i < blocks.length) {
@@ -436,10 +477,29 @@ export function cleanWordHtml(
     // be shown. Unwrap it rather than dropping it: the marker is the only record
     // of how the list was numbered, and `rebuildWordLists` needs it below.
     .replace(/<!\[if\s*!supportLists\s*\]>([\s\S]*?)<!\[endif\]>/gi, '$1')
+    // Footnote and endnote references live in the same kind of block. Keep
+    // them, as superscripts, so "[1]" still points at the note below.
+    .replace(
+      /<!\[if\s*!support(?:Foot|End)notes\s*\]>([\s\S]*?)<!\[endif\]>/gi,
+      '<sup>$1</sup>',
+    )
     .replace(/<!\[if[^\]]*\]>[\s\S]*?<!\[endif\]>/gi, '');
 
   // 5. DOMParser structural cleanup.
   const doc = new DOMParser().parseFromString(processed, 'text/html');
+
+  // Things the author never meant the reader to see: hidden text, the review
+  // comments Word appends as a list, and the "deleted" side of tracked changes.
+  // These are read from styles, so they go before the styles do.
+  doc.querySelectorAll('[style]').forEach((el) => {
+    const style = el.getAttribute('style') ?? '';
+    if (/display\s*:\s*none|mso-hide\s*:\s*all|mso-element\s*:\s*comment-list/i.test(style))
+      el.remove();
+  });
+  doc.querySelectorAll('a[href^="#_msocom"], del').forEach((el) => el.remove());
+  doc
+    .querySelectorAll('ins')
+    .forEach((el) => el.replaceWith(...Array.from(el.childNodes)));
 
   // Lists first — this reads the mso-list styles and marker spans that the
   // style and class stripping below is about to delete.
@@ -452,10 +512,17 @@ export function cleanWordHtml(
 
   keepOnlyTextAlign(doc);
 
-  // Strip mso-* class attributes
+  // Strip Word's own classes: mso-*, the spell/grammar markers, the section
+  // wrapper. Anything else is the author's and stays.
   doc.querySelectorAll('[class]').forEach((el) => {
-    if (/mso/i.test(el.getAttribute('class') ?? ''))
+    if (/mso|spelle|grame|wordsection/i.test(el.getAttribute('class') ?? ''))
       el.removeAttribute('class');
+  });
+
+  // Bookmarks (<a name="_Toc…">, <a name="_Hlk…">, OLE_LINK) are empty
+  // anchors with nothing to link to once the document is gone.
+  doc.querySelectorAll('a[name]:not([href])').forEach((el) => {
+    if (!el.textContent) el.remove();
   });
 
   // Word references pasted images by local path (file:///…) — dead links in a
@@ -466,6 +533,12 @@ export function cleanWordHtml(
 
   // Clean up empty paragraphs left by o:p removal
   doc.querySelectorAll('p:empty').forEach((el) => el.remove());
+
+  // Every Word run is a <span>; with its style and class gone most are bare
+  // wrappers. Unwrap those so the output reads like HTML someone wrote.
+  Array.from(doc.querySelectorAll('span'))
+    .filter((el) => el.attributes.length === 0)
+    .forEach((el) => el.replaceWith(...Array.from(el.childNodes)));
 
   collapseSourceWhitespace(doc.body);
 
@@ -496,7 +569,8 @@ export function stripInlineColors(html: string): string {
     const kept = (el.getAttribute('style') ?? '')
       .split(';')
       .filter(
-        (decl) => !/^\s*(?:background-)?color\s*:/i.test(decl) && decl.trim(),
+        (decl) =>
+          !/^\s*(?:background(?:-color)?|color)\s*:/i.test(decl) && decl.trim(),
       )
       .join('; ')
       .trim();
@@ -513,8 +587,7 @@ export function stripInlineColors(html: string): string {
  * Google Docs paste can't put black text on a dark theme.
  *
  * Named after ProseMirror's editor prop so it can be passed by reference —
- * Tiptap takes the same prop via `editorProps`. No options for that reason;
- * compose `cleanWordHtml` yourself if you need `renderMath`.
+ * Tiptap takes the same prop via `editorProps`. No options for that reason.
  */
 export function transformPastedHTML(html: string): string {
   if (isWordHtml(html) || hasWordMath(html)) {

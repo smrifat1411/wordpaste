@@ -419,3 +419,96 @@ describe('no DOM globals beyond DOMParser', () => {
     });
   });
 });
+
+describe('Word lists outside <body>', () => {
+  it('rebuilds a list inside a table cell', () => {
+    const out = cleanWordHtml(
+      word(`<table><tr><td>${item('A', '1.')}${item('B', '2.')}</td></tr></table>`),
+    );
+    expect(out).toContain('<td><ol><li>A</li><li>B</li></ol></td>');
+  });
+
+  it("rebuilds a list inside Outlook's WordSection1 wrapper", () => {
+    const out = cleanWordHtml(
+      word(`<div class=WordSection1>${item('A', '1.')}${item('B', '2.')}</div>`),
+    );
+    expect(out).toBe('<div><ol><li>A</li><li>B</li></ol></div>');
+  });
+
+  it('keeps the start of a lettered or roman list', () => {
+    expect(cleanWordHtml(word(item('C', 'c.') + item('D', 'd.')))).toBe(
+      '<ol type="a" start="3"><li>C</li><li>D</li></ol>',
+    );
+    expect(cleanWordHtml(word(item('Four', 'iv.') + item('Five', 'v.')))).toBe(
+      '<ol type="i" start="4"><li>Four</li><li>Five</li></ol>',
+    );
+  });
+
+  it('treats legal numbering as ordered, not as bullets', () => {
+    expect(cleanWordHtml(word(item('A', '1.1.') + item('B', '1.2.')))).toBe(
+      '<ol><li>A</li><li>B</li></ol>',
+    );
+  });
+});
+
+describe('Word notes, comments, hidden text', () => {
+  it('keeps a footnote reference as a superscript link', () => {
+    const html = word(
+      `<p>Text<a href="#_ftn1" name="_ftnref1"><span class=MsoFootnoteReference>` +
+        `<span style='mso-special-character:footnote'><![if !supportFootnotes]>` +
+        `<span class=MsoFootnoteReference>[1]</span><![endif]></span></span></a> more</p>`,
+    );
+    expect(cleanWordHtml(html)).toBe(
+      '<p>Text<a href="#_ftn1" name="_ftnref1"><sup>[1]</sup></a> more</p>',
+    );
+  });
+
+  it('drops the review comments and their anchors', () => {
+    const html = word(
+      `<p>Claim<a style='mso-comment-reference:A_1' href="#_msocom_1" name="_msoanchor_1">` +
+        `<span class=MsoCommentReference>[A1]</span></a> text</p>` +
+        `<div style='mso-element:comment-list'><div style='mso-element:comment'>` +
+        `<p class=MsoCommentText>Reviewer note</p></div></div>`,
+    );
+    expect(cleanWordHtml(html)).toBe('<p>Claim text</p>');
+  });
+
+  it('drops hidden text and tracked deletions, keeps tracked insertions', () => {
+    const html = word(
+      `<p>Keep <span style='display:none;mso-hide:all'>secret</span>` +
+        `<span class=msoDel><del cite="mailto:a" datetime="2026-01-01T00:00">old</del></span>` +
+        `<span class=msoIns><ins cite="mailto:a" datetime="2026-01-01T00:00">new</ins></span></p>`,
+    );
+    expect(cleanWordHtml(html)).toBe('<p>Keep new</p>');
+  });
+});
+
+describe('Word leftovers', () => {
+  it('removes empty bookmarks, bare spans and Word classes, keeps real links', () => {
+    const html = word(
+      `<p><a name="_Toc1"></a><a name="_Hlk2"></a><span lang=EN-US>Heading</span> ` +
+        `<span class=SpellE>wordpaste</span> <a href="https://x.y">link</a></p>`,
+    );
+    expect(cleanWordHtml(html)).toBe(
+      '<p><span lang="EN-US">Heading</span> wordpaste <a href="https://x.y">link</a></p>',
+    );
+  });
+
+  it('strips the background shorthand along with colour', () => {
+    expect(
+      stripInlineColors('<p style="background: yellow; text-align: center">x</p>'),
+    ).toBe('<p style="text-align: center">x</p>');
+  });
+});
+
+describe('Google Docs superscript and subscript', () => {
+  it('turns vertical-align into real tags before the style is dropped', () => {
+    const html =
+      `<b id="docs-internal-guid-1" style="font-weight:normal">` +
+      `<span style="vertical-align:super;font-size:0.6em">2</span>` +
+      `<span style="vertical-align:sub">i</span></b>`;
+    expect(cleanGoogleDocsHtml(html)).toBe(
+      '<span><sup>2</sup></span><span><sub>i</sub></span>',
+    );
+  });
+});

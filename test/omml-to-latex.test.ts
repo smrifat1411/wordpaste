@@ -307,3 +307,13 @@ describe('ommlToLatex constructs', () => {
     ).toBe('\\begin{aligned} a=b \\\\ c=d \\end{aligned}');
   });
 });
+
+describe('irregular OMML from the clipboard', () => {
+  it('survives <o:p> marks and &nbsp; inside runs instead of returning nothing', () => {
+    const out = ommlToLatex(
+      '<m:oMath><m:r><m:t>x&nbsp;=&nbsp;1</m:t><o:p></o:p></m:r></m:oMath>',
+    );
+    expect(out).not.toBe('');
+    expect(out).toContain('=');
+  });
+});

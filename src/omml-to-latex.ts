@@ -306,8 +306,12 @@ function conv(node: Element): string {
  */
 export function ommlToLatex(ommlFragment: string): string {
   try {
+    // Word drops <o:p> paragraph marks and &nbsp; inside equation runs. XML
+    // knows neither the prefix nor the entity, and either one would otherwise
+    // make the whole equation vanish.
     const doc = new DOMParser().parseFromString(
-      `<root xmlns:m="${M_NS}" xmlns:w="${W_NS}">${ommlFragment}</root>`,
+      `<root xmlns:m="${M_NS}" xmlns:w="${W_NS}" xmlns:o="urn:schemas-microsoft-com:office:office">` +
+        `${ommlFragment.replace(/&nbsp;/g, ' ')}</root>`,
       'application/xml',
     );
     if (doc.querySelector('parsererror')) return '';

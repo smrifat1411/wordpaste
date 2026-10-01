@@ -4,6 +4,43 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.12.0
+
+### Fixed
+
+- **Lists inside table cells and Outlook messages stayed frozen as text.** The
+  list rebuild only looked at direct children of `<body>`; Outlook wraps the
+  message in `<div class=WordSection1>` and a list in a cell belongs to its
+  `<td>`. Every block container is scanned now.
+- **Lettered and roman lists lost their start.** `c.`, `d.` gives
+  `<ol type="a" start="3">`; `iv.`, `v.` gives `start="4"`. Legal numbering
+  (`1.1.`, `1.2.`) is ordered instead of turning into bullets.
+- **Google Docs superscript and subscript were dropped**, although the README
+  said they survive. `vertical-align: super` / `sub` become `<sup>` / `<sub>`
+  before the styles go.
+- **Footnote and endnote markers vanished.** Word keeps the `[1]` in a
+  downlevel block the cleaner deleted. It stays, as `<sup>`, inside its link
+  to the note.
+- **An `<o:p>` or `&nbsp;` inside an equation made the whole equation
+  disappear.** The OMML parser now knows the `o:` prefix and the entity.
+
+### Changed
+
+- **Hidden text, review comments and tracked deletions are removed.** Runs
+  styled `display:none` or `mso-hide:all`, the comment list Word appends with
+  its `[A1]` anchors, and `<del>` are dropped; `<ins>` is unwrapped.
+- **Word leftovers are gone:** empty bookmarks (`<a name="_Toc…">`), bare
+  `<span>` wrappers, the `SpellE` / `GramE` / `WordSection` classes, and the
+  `background:` shorthand.
+
+### Docs
+
+- A Quill example (`examples/quill.html`) with its README section, and an
+  "Other editors" table giving the paste hook for TinyMCE, Froala, CKEditor 5,
+  Plate, BlockNote, Milkdown, Trix, Svelte, Angular and Markdown.
+- The README no longer claims "one line to wire into any editor". Cleaning is
+  one line; rendering the equations is native only in Tiptap.
+
 ## 0.11.2
 
 Metadata only; no code changed.

@@ -46,13 +46,14 @@ Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
 - **Equations survive** as editable LaTeX instead of screenshots
 - **Lists become real lists**, nested, numbered by the browser again
 - **3.6 kB gzipped**, zero dependencies, types included
-- **One line** to wire into any editor
+- **One line** to clean in any editor; equations render natively in Tiptap,
+  elsewhere with a small math node of your own
 - JavaScript and TypeScript, no framework
 
 ## Contents
 
 - [Install](#install)
-- [Use it](#use-it) — [Tiptap](#tiptap) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Vanilla JavaScript](#vanilla-javascript) · [React, Next.js, Vue](#react-nextjs-vue)
+- [Use it](#use-it) — [Tiptap](#tiptap) · [ProseMirror](#prosemirror) · [Lexical](#lexical) · [Quill](#quill) · [Vanilla JavaScript](#vanilla-javascript) · [React, Next.js, Vue](#react-nextjs-vue) · [Other editors](#other-editors)
 - [Showing the maths](#showing-the-maths) — **read this if equations look wrong**
 - [What it handles](#what-it-handles)
 - [Reading equations from a .docx](#reading-equations-from-a-docx) — `ommlToLatex` on its own, and Node
@@ -73,7 +74,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.11.2';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.12.0';
 </script>
 ```
 
@@ -143,6 +144,40 @@ editor.registerCommand(
   COMMAND_PRIORITY_HIGH,
 );
 ```
+
+### Quill
+
+**[▶ Run this example](https://smrifat1411.github.io/wordpaste/examples/quill.html)**
+
+Quill 2 has no paste prop, so subclass its clipboard module. Quill's own
+`formula` format renders the equations; one matcher maps the span onto it.
+
+```js
+import Quill from 'quill';
+import { transformPastedHTML } from 'wordpaste';
+
+const Clipboard = Quill.import('modules/clipboard');
+const Delta = Quill.import('delta');
+
+class WordClipboard extends Clipboard {
+  onPaste(range, { html, text }) {
+    super.onPaste(range, { html: html && transformPastedHTML(html), text });
+  }
+}
+Quill.register('modules/clipboard', WordClipboard, true);
+
+new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    clipboard: {
+      matchers: [['span[data-latex]', (node) => new Delta().insert({ formula: node.dataset.latex })]],
+    },
+  },
+});
+```
+
+`formula` needs KaTeX on the page as `window.katex`. Block equations become
+inline; Quill has no display mode.
 
 ### Vanilla JavaScript
 
@@ -221,6 +256,24 @@ To clean HTML on the server on purpose, supply a DOM first:
 import { JSDOM } from 'jsdom';
 globalThis.DOMParser = new JSDOM().window.DOMParser;
 ```
+
+### Other editors
+
+Where each editor lets you see the clipboard HTML, and what it does with the
+equation span afterwards. Cleaning is one line everywhere. Rendering the maths
+is native in Tiptap; elsewhere it is a small node, blot or rule of your own.
+
+| Editor | Where to call `transformPastedHTML` | The equation span |
+| --- | --- | --- |
+| TinyMCE | `paste_preprocess: (editor, args) => { args.content = transformPastedHTML(args.content); }` | kept, shown as its LaTeX text |
+| Froala | `events: { 'paste.beforeCleanup': (html) => transformPastedHTML(html) }` and `wordPasteModal: false` | kept, shown as its LaTeX text |
+| CKEditor 5 | `editor.editing.view.document.on('clipboardInput', (evt, data) => { if (typeof data.content === 'string') data.content = transformPastedHTML(data.content); });` and leave out `PasteFromOffice`, which would clean it again | dropped unless General HTML Support allows `span[data-type][data-latex]`; a math plugin then renders it |
+| Plate | a plugin with `inject: { plugins: { [HtmlPlugin.key]: { parser: { transformData: ({ data }) => transformPastedHTML(data) } } } }`, the shape of Plate's own `DocxPlugin`, which you then leave out | needs one deserializer rule per math plugin |
+| BlockNote | `pasteHandler: ({ event, editor }) => { const html = event.clipboardData?.getData('text/html'); if (!html) return false; editor.pasteHTML(transformPastedHTML(html)); return true; }` | dropped; BlockNote has no math node |
+| Milkdown | `ctx.update(editorViewOptionsCtx, (prev) => ({ ...prev, transformPastedHTML }))`, with `@milkdown/plugin-clipboard` 7.19.2 or later | rename to Milkdown's `data-type="math_inline"` in a parse rule |
+| Trix | `addEventListener('trix-before-paste', (e) => { if (e.paste.html) e.paste.html = transformPastedHTML(e.paste.html); })` | dropped |
+| Svelte, Angular | you construct `new Editor({ editorProps: { transformPastedHTML } })` yourself, so the Tiptap line is unchanged | rendered by `@tiptap/extension-mathematics` |
+| Markdown | clean, then Turndown with a rule that turns `[data-latex]` into `$…$` | needs that rule |
 
 ## Showing the maths
 

@@ -1,6 +1,6 @@
 {
   "name": "wordpaste",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "description": "Clean clipboard HTML from Microsoft Word, LibreOffice Writer, Google Docs, Outlook and Excel on paste, and keep equations editable as LaTeX (OMML and MathML). Zero dependencies. Tiptap, ProseMirror, Lexical or plain contenteditable.",
   "keywords": [
     "word",
