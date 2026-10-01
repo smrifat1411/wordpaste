@@ -1,6 +1,3 @@
 node_modules
 dist
 *.tgz
-
-# local publicity drafts, not for the public repo
-marketing/
