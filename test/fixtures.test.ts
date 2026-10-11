@@ -39,4 +39,34 @@ describe('real clipboard dumps', () => {
     expect(out).toContain('Item 1');
     expect(out).toContain('Item 6');
   });
+
+  it('Excel 16 for Mac: formatting hidden in .xlNN classes becomes real tags', () => {
+    const out = transformPastedHTML(fixture('excel16-mac-table'));
+    expect(out).not.toMatch(wordJunk);
+    expect(out).not.toMatch(/class=|xl\d|color|yellow|font-/);
+    expect(out).toContain('<td height="21" width="87"><strong>Item</strong></td>');
+    expect(out).toContain('<td width="87"><strong>Note</strong></td>');
+    expect(out).toContain('<em>Apple</em>');
+    expect(out).toContain('<u>Banana</u>');
+    expect(out).toContain('<s>discontinued</s>');
+    expect(out).toContain('line one<br> line two');
+    expect(out).toContain('colspan="4" height="21" style="text-align:center">Merged across');
+    expect(out.match(/<td/g)).toHaveLength(17);
+  });
+
+  it('Google Sheets: wrapper, stylesheet and bookkeeping go; formatting and the link stay', () => {
+    const out = transformPastedHTML(fixture('google-sheets-table'));
+    expect(out).not.toMatch(wordJunk);
+    expect(out).not.toMatch(/<style|google-sheets|data-sheets|<div|class=|color|padding:/);
+    expect(out).toContain('<td><strong>Item</strong></td>');
+    expect(out).toContain('<td><em>Apple</em></td>');
+    expect(out).toContain('<td><u>Banana</u></td>');
+    expect(out).toContain('<td><s>discontinued</s></td>');
+    expect(out).toContain('<td style="text-align:right">3</td>');
+    expect(out).toContain('line one<br>line two');
+    expect(out).toContain('style="text-align:center" rowspan="1" colspan="4">Merged across');
+    expect(out).toContain(
+      '<td><a href="https://example.com/" target="_blank">https://example.com</a></td>',
+    );
+  });
 });

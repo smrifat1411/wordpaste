@@ -13,6 +13,11 @@ word12-win-table.html, word12-win-lists.html
   PasteStrings.ts (constants `table` and `wordList1`).
   MIT License. Copyright (c) 2022 Ephox Corporation DBA Tiny Technologies, Inc.
 
+excel16-mac-table.html, google-sheets-table.html
+  Captured by the wordpaste author on 2026-10-11 from Microsoft Excel 16.112
+  for Mac (its Generator meta says Excel 15) and from Google Sheets in Chrome,
+  read off the macOS pasteboard. MIT License, same as the package.
+
 The MIT License text applies to each: permission is hereby granted, free of
 charge, to any person obtaining a copy of this software and associated
 documentation files, to deal in the Software without restriction, subject to

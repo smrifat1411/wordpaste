@@ -177,7 +177,7 @@ function keepOnlyTextAlign(doc: Document): void {
 // ── Google Docs ────────────────────────────────────────────────────────────
 
 export function isGoogleDocsHtml(html: string): boolean {
-  return html.includes('docs-internal-guid');
+  return html.includes('docs-internal-guid') || html.includes('<google-sheets-html-origin');
 }
 
 // Docs carries bold and italic as inline styles, not tags. These have to become
@@ -191,33 +191,57 @@ const STYLE_AS_TAG: Array<[RegExp, string]> = [
   [/vertical-align\s*:\s*sub/i, 'sub'],
 ];
 
+/** Wrap an element's content in the real tags its inline style implies. */
+function applyInlineStyleAsTags(doc: Document, el: Element): void {
+  const css = el.getAttribute('style') ?? '';
+  for (const [pattern, tag] of STYLE_AS_TAG) {
+    if (!pattern.test(css)) continue;
+    const wrapper = doc.createElement(tag);
+    while (el.firstChild) wrapper.appendChild(el.firstChild);
+    el.appendChild(wrapper);
+  }
+}
+
 /**
- * Clean a Google Docs paste: unwrap its fake bold wrapper, turn its inline
- * formatting into real tags, then drop the font noise.
+ * Clean a Google Docs or Google Sheets paste: unwrap Docs' fake bold wrapper
+ * and Sheets' origin element, turn inline formatting into real tags, then
+ * drop the font noise and Sheets' bookkeeping.
  */
 export function cleanGoogleDocsHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
   // Docs wraps the whole paste in <b style="font-weight:normal">. Unwrap it
   // FIRST — strip the style and a bare <b> makes everything bold.
+  // Sheets wraps the table in <google-sheets-html-origin> and floats every
+  // link inside two <div>s; both go the same way.
   doc
-    .querySelectorAll('b[id^="docs-internal-guid"], b[style*="font-weight:normal"]')
+    .querySelectorAll(
+      'b[id^="docs-internal-guid"], b[style*="font-weight:normal"], google-sheets-html-origin, td div',
+    )
     .forEach((el) => el.replaceWith(...Array.from(el.childNodes)));
-
-  doc.querySelectorAll('[style]').forEach((el) => {
-    const style = el.getAttribute('style') ?? '';
-    for (const [pattern, tag] of STYLE_AS_TAG) {
-      if (!pattern.test(style)) continue;
-      const wrapper = doc.createElement(tag);
-      while (el.firstChild) wrapper.appendChild(el.firstChild);
-      el.appendChild(wrapper);
-    }
+  // Sheets ships a <style> for cell borders inside the fragment. Editors drop
+  // it; a plain contenteditable would insert it and border every table.
+  doc.querySelectorAll('style').forEach((el) => el.remove());
+  // Sheets underlines and colours a link cell as a whole; the link is the
+  // underline. ponytail: drops the cell's text-align too, split the style if
+  // a right-aligned link cell ever matters.
+  doc.querySelectorAll('td a').forEach((link) => {
+    link.removeAttribute('class');
+    link.parentElement!.removeAttribute('style');
   });
+
+  doc.querySelectorAll('[style]').forEach((el) => applyInlineStyleAsTags(doc, el));
 
   keepOnlyTextAlign(doc);
   doc
     .querySelectorAll('[id^="docs-internal-guid"]')
     .forEach((el) => el.removeAttribute('id'));
+  // Sheets' `data-sheets-*` bookkeeping, and the xmlns it puts on the table.
+  doc.querySelectorAll('*').forEach((el) =>
+    el.getAttributeNames().forEach((name) => {
+      if (/^(?:xmlns|data-sheets)/.test(name)) el.removeAttribute(name);
+    }),
+  );
 
   return doc.body.innerHTML;
 }
@@ -514,12 +538,21 @@ export function cleanWordHtml(
     .filter((el) => el.tagName.includes(':'))
     .forEach((el) => el.remove());
 
+  // Excel keeps each cell's bold, italic, underline and alignment in a `.xlNN`
+  // rule inside <head><style>, which body.innerHTML never sees. Read the rules
+  // off the raw string and turn them into tags before the classes go.
+  for (const [, cls, rule] of html.matchAll(/\.(xl\d+)\s*\{([^}]*)\}/g))
+    doc.querySelectorAll(`.${cls}`).forEach((cell) => {
+      cell.setAttribute('style', rule!);
+      applyInlineStyleAsTags(doc, cell);
+    });
+
   keepOnlyTextAlign(doc);
 
   // Strip Word's own classes: mso-*, the spell/grammar markers, the section
   // wrapper. Anything else is the author's and stays.
   doc.querySelectorAll('[class]').forEach((el) => {
-    if (/mso|spelle|grame|wordsection/i.test(el.getAttribute('class') ?? ''))
+    if (/mso|spelle|grame|wordsection|^xl\d/i.test(el.getAttribute('class') ?? ''))
       el.removeAttribute('class');
   });
 

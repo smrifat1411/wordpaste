@@ -41,11 +41,12 @@ import { transformPastedHTML } from 'wordpaste';
 ```
 
 You do not need to know where the paste came from. Word, LibreOffice, Outlook,
-Excel, Google Docs — it handles all of them, and leaves ordinary HTML alone.
+Excel, Google Docs, Google Sheets — it handles all of them, and leaves ordinary
+HTML alone.
 
 - **Equations survive** as editable LaTeX instead of screenshots
 - **Lists become real lists**, nested, numbered by the browser again
-- **4.3 kB gzipped**, zero dependencies, types included
+- **4.4 kB gzipped**, zero dependencies, types included
 - **One line** to clean in any editor; equations render natively in Tiptap,
   elsewhere with a small math node of your own
 - JavaScript and TypeScript, no framework
@@ -74,7 +75,7 @@ URL is served from a stale browser cache after a release.
 
 ```html
 <script type="module">
-  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.12.1';
+  import { transformPastedHTML } from 'https://esm.sh/wordpaste@0.13.0';
 </script>
 ```
 
@@ -313,6 +314,7 @@ document.querySelectorAll('[data-latex]').forEach((el) => {
 | **Google Docs** | Yes | No |
 | **Outlook** | Yes | n/a |
 | **Excel** | Yes | n/a |
+| **Google Sheets** | Yes | n/a |
 | Anything else | Colour only | — |
 
 Bold, italic, underline, super/subscript, links, lists, tables and `text-align`
@@ -340,6 +342,14 @@ become real `<strong>` and `<em>` before the fonts are dropped.
 Its equations cannot be recovered by anyone: Docs puts them on the clipboard as
 images already. Word is the unusual one — it sends the picture *and* the real
 maths, which is the gap this package exploits.
+
+**Spreadsheets keep their cell formatting.** Excel stores each cell's bold,
+italic, underline and alignment in a `.xlNN` class whose rule sits in a
+`<style>` block the editor never sees, so stripping the class loses the
+formatting. wordpaste reads the rules first and emits real tags. Google Sheets
+sends inline styles plus a `<style>` block, a `<google-sheets-html-origin>`
+wrapper, `data-sheets-*` bookkeeping and two `<div>`s around every link; all of
+that goes, while `colspan`, `rowspan` and the links stay.
 
 ## Reading equations from a `.docx`
 

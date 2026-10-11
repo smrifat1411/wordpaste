@@ -4,6 +4,34 @@ All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html); while the major
 version is `0`, minor versions may change behaviour.
 
+## 0.13.0
+
+### Added
+
+- **Spreadsheet pastes keep their formatting.** Excel stores each cell's bold,
+  italic, underline and alignment in a `.xlNN` class whose rule lives in a
+  `<style>` block that `body.innerHTML` never sees. Until now the class was
+  left behind as junk and the formatting was lost. The rules are read first
+  and become `<strong>`, `<em>`, `<u>` and `text-align`.
+- **Google Sheets is detected.** Its paste used to pass through untouched,
+  carrying a `<style>` block, a `<google-sheets-html-origin>` wrapper,
+  `data-sheets-*` attributes and two `<div>`s around every link into the
+  editor. Formatting becomes real tags; `colspan`, `rowspan` and links stay.
+- Real clipboard dumps from Excel 16 for Mac and Google Sheets in Chrome back
+  the tests (`test/fixtures/`).
+
+### Docs
+
+- `transformPastedHTML` is 4.4 kB minified and gzipped (4.3 at 0.12.1; the
+  spreadsheet work is +171 B, roughly 90 B Excel, 50 B Sheets, the rest the
+  shared style-to-tags helper).
+
+### Known gaps
+
+- Excel for Windows adds `x:num` / `x:str` attributes to cells; no fixture
+  yet, so they are left alone. Excel Online and LibreOffice Calc are not
+  captured yet either.
+
 ## 0.12.1
 
 ### Fixed
