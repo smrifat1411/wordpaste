@@ -317,6 +317,11 @@ document.querySelectorAll('[data-latex]').forEach((el) => {
 | **Google Sheets** | Yes | n/a |
 | Anything else | Colour only | — |
 
+Real clipboard dumps in `test/fixtures/` cover Microsoft Word 2007 for Windows,
+Word 15 for Mac, Excel 16 for Mac and Google Sheets in Chrome. Outlook, Google
+Docs, LibreOffice Writer and Calc, Word Online, Excel for Windows and Excel
+Online are not captured yet: untested, not unsupported.
+
 Bold, italic, underline, super/subscript, links, lists, tables and `text-align`
 survive. Colour, highlight, font family and font size do not — that is the
 point, so the source document's design does not leak into your app.

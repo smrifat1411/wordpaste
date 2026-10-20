@@ -22,9 +22,10 @@ version is `0`, minor versions may change behaviour.
 
 ### Docs
 
-- `transformPastedHTML` is 4.4 kB minified and gzipped (4.3 at 0.12.1; the
-  spreadsheet work is +171 B, roughly 90 B Excel, 50 B Sheets, the rest the
-  shared style-to-tags helper).
+- `transformPastedHTML` is 4,428 B minified and gzipped (4.4 kB; 4,259 B at
+  0.12.1), so the spreadsheet work costs +169 B: roughly 90 B Excel, 50 B
+  Sheets, the rest the shared style-to-tags helper. Measured with rolldown
+  minify and `gzip -9 -n`.
 
 ### Known gaps
 
